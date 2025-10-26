@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>西林磨损计算器</title>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --primary-hover: #0056b3;
+            --secondary-color: #6c757d;
+            --secondary-hover: #545b62;
+            --background-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --border-color: #dee2e6;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            --box-shadow-hover: 0 4px 15px rgba(0, 0, 0, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: none;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .tab {
+            display: flex;
+            background-color: var(--card-bg);
+            box-shadow: var(--box-shadow);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            margin-bottom: 25px;
+        }
+
+        .tabButton {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            background-color: transparent;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tabButton:hover {
+            background-color: rgba(0, 123, 255, 0.1);
+            color: var(--primary-color);
+        }
+
+        .tabButton.active {
+            background-color: var(--primary-color);
+            color: #fff;
+        }
+
+        .tabcontent {
+            display: none;
+            padding: 25px;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .tabcontent.active {
+            display: block;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-color);
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        .selector-group {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+            width: 100%;
+        }
+
+        .selector-container {
+            flex: 1;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            min-width: 250px;
+        }
+
+        .selector-container h4 {
+            margin-bottom: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            font-size: 14px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+            transition: all 0.3s ease;
+        }
+
+        select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+
+        textarea,
+        input {
+            width: 100%;
+            padding: 12px;
+            font-size: 14px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            background-color: var(--card-bg);
+            resize: none;
+        }
+
+        textarea:focus,
+        input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+
+        .button-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .button-container button {
+            flex: 1;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .button-container button.primary {
+            background-color: var(--primary-color);
+            color: #fff;
+        }
+
+        .button-container button.primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--box-shadow-hover);
+        }
+
+        .button-container button.secondary {
+            background-color: var(--secondary-color);
+            color: #fff;
+        }
+
+        .button-container button.secondary:hover {
+            background-color: var(--secondary-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--box-shadow-hover);
+        }
+
+        #fcTheProgress {
+            width: 100%;
+            height: 20px;
+            background-color: #e9ecef;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        #fcProgressBar {
+            height: 100%;
+            background: linear-gradient(45deg, var(--primary-color), #4dabf7);
+            width: 0%;
+            transition: width 0.4s ease;
+            position: relative;
+        }
+
+        #fcCombinationsText {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            min-height: 200px;
+            max-height: 600px;
+            overflow-y: auto;
+            width: 100%;
+        }
+
+        .criteria-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+
+        .criteria-item {
+            flex: 1;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            text-align: center;
+            min-width: 200px;
+        }
+
+        .criteria-item h4 {
+            margin-bottom: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .material-wear-range {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+
+        .material-wear-range div {
+            flex: 1;
+        }
+
+        .material-wear-range h4 {
+            font-size: 13px;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .material-types-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+
+        .material-type-container {
+            flex: 1;
+            min-width: 350px;
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: var(--box-shadow);
+            transition: all 0.3s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .material-type-container:hover {
+            box-shadow: var(--box-shadow-hover);
+            transform: translateY(-2px);
+        }
+
+        .material-type-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .material-type-header h4 {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .material-type-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .material-type-1 {
+            background-color: #007bff;
+        }
+
+        .material-type-2 {
+            background-color: #28a745;
+        }
+
+        .material-type-3 {
+            background-color: #dc3545;
+        }
+
+        .material-type-4 {
+            background-color: #ffc107;
+        }
+
+        .material-type-5 {
+            background-color: #6f42c1;
+        }
+
+        .material-type-textarea {
+            height: 80px;
+            font-size: 13px;
+            margin-bottom: 12px;
+            width: 100%;
+        }
+
+        .material-type-output {
+            height: 40px;
+            font-size: 13px;
+            margin-bottom: 12px;
+            width: 100%;
+        }
+
+        .material-type-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+
+        .material-type-buttons button {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 80px;
+        }
+
+        .material-type-buttons button.primary {
+            background-color: var(--primary-color);
+            color: #fff;
+        }
+
+        .material-type-buttons button.primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .material-type-buttons button.secondary {
+            background-color: var(--secondary-color);
+            color: #fff;
+        }
+
+        .material-type-buttons button.secondary:hover {
+            background-color: var(--secondary-hover);
+        }
+
+        .result-info {
+            background: var(--card-bg);
+            padding: 15px 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 500;
+            width: 100%;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            width: 100%;
+        }
+
+        .action-buttons button {
+            flex: 1;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            min-width: 120px;
+        }
+
+        
+        .text-material-type-1 {
+            color: #007bff;
+            font-weight: bold;
+        }
+
+        .text-material-type-2 {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .text-material-type-3 {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .text-material-type-4 {
+            color: #ffc107;
+            font-weight: bold;
+        }
+
+        .text-material-type-5 {
+            color: #6f42c1;
+            font-weight: bold;
+        }
+
+        .message-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow-hover);
+            z-index: 1000;
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+        }
+
+        .message-toast.show {
+            transform: translateX(0);
+        }
+
+        .message-toast.success {
+            background: #28a745;
+        }
+
+        .message-toast.error {
+            background: #dc3545;
+        }
+
+        .combination-result {
+            margin-bottom: 10px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+        }
+
+        .stats-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            flex: 1;
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            text-align: center;
+            min-width: 150px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--secondary-color);
+            margin-top: 5px;
+        }
+
+        .real-time-result {
+            border-left: 3px solid var(--primary-color);
+            padding: 10px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .search-container {
+            margin: 15px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        
+        .exact-match-highlight {
+            color: #a70000 !important;
+            background-color: #FFFF00 !important;
+            padding: 2px 5px !important;
+            border-radius: 3px !important;
+            font-weight: bold !important;
+            border: 2px solid #ff9900 !important;
+            display: inline-block !important;
+        }
+
+        .normal-wear {
+            color: #a70000;
+            display: inline-block;
+        }
+
+        
+        .search-highlight {
+            background-color: #ffff76 !important;
+            border: 2px solid #ffc107 !important;
+            box-shadow: 0 0 10px rgba(255, 193, 7, 0.5) !important;
+        }
+
+        
+        .real-time-result .exact-match-highlight {
+            background-color: #FFFF00 !important;
+            border: 2px solid #ff9900 !important;
+        }
+
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .author-info-card,
+        .tool-info-card {
+            transition: all 0.3s ease;
+        }
+
+        .author-info-card:hover,
+        .tool-info-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--box-shadow-hover);
+        }
+
+        .social-card {
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .social-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        
+        @media (max-width: 768px) {
+            .author-container {
+                padding: 20px !important;
+            }
+
+            .social-card {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="tab">
+            <button class="tabButton active" onclick="openTab('floatCombosDiv')">磨损计算</button>
+            <button class="tabButton" onclick="openTab('ieee754Div')">IEEE754转换</button>
+            <button class="tabButton" onclick="openTab('aboutAuthorDiv')">盘尼西林</button>
+        </div>
+
+        <div id="floatCombosDiv" class="tabcontent active">
+            <h3 class="section-title">材料配置</h3>
+
+            <div class="selector-group">
+                <div class="selector-container">
+                    <h4>选择合成材料数量</h4>
+                    <select id="materialCountSelect" onchange="updateMaterialCount()">
+                        <option value="5">5个材料</option>
+                        <option value="10">10个材料</option>
+                    </select>
+                </div>
+
+                <div class="selector-container">
+                    <h4>选择材料种类数量</h4>
+                    <select id="materialTypeCountSelect" onchange="updateMaterialTypeCount()">
+                        <option value="1">1种材料</option>
+                        <option value="2">2种材料</option>
+                        <option value="3">3种材料</option>
+                        <option value="4">4种材料</option>
+                        <option value="5">5种材料</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 材料种类容器 - 默认显示材料种类1 -->
+            <div id="materialTypeContainers" class="material-types-container">
+                <div class="material-type-container" id="materialType1">
+                    <div class="material-type-header">
+                        <div class="material-type-color material-type-1"></div>
+                        <h4>材料种类 1</h4>
+                    </div>
+                    <textarea id="fcAltInput1" class="material-type-textarea"
+                        placeholder="输入材料种类 1 的磨损数据..."></textarea>
+                    <div class="material-type-buttons">
+                        <button class="primary" onclick="extractAndShowFloats(1)">提取数据</button>
+                    </div>
+                    <textarea id="fcOutput1" class="material-type-output" readonly
+                        placeholder="提取的材料数据将显示在这里"></textarea>
+                    <textarea id="fcCumulative1" class="material-type-output" readonly
+                        placeholder="累计的材料数据将显示在这里"></textarea>
+                    <div class="material-type-buttons">
+                        <button class="secondary" onclick="copyResults(1)">复制数据</button>
+                        <button class="primary" onclick="mergeToTotalInput(1)">汇总数据</button>
+                        <button class="secondary" onclick="clearMaterialType(1)">清除数据</button>
+                    </div>
+                    <div class="material-wear-range">
+                        <div>
+                            <h4>材料最小磨损</h4>
+                            <input id="materialMinWear1" value="0.00" placeholder="最小磨损" />
+                        </div>
+                        <div>
+                            <h4>材料最大磨损</h4>
+                            <input id="materialMaxWear1" value="0.80" placeholder="最大磨损" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="secondary" onclick="clearAllMaterialTypes()">清除所有材料数据</button>
+            </div>
+
+            <h3 class="section-title">数据处理</h3>
+            <textarea id="fcAltInput" onkeyup="fcUpdateCombinations()" rows="4"
+                placeholder="在此输入总的材料数据，或使用上方的汇总功能..."></textarea>
+
+            <h3 class="section-title">计算参数</h3>
+            <div class="criteria-container">
+                <div class="criteria-item">
+                    <h4>成品最大磨损</h4>
+                    <input id="fcCmaxwearinput" placeholder="输入最大磨损" />
+                </div>
+                <div class="criteria-item">
+                    <h4>成品最小磨损</h4>
+                    <input id="fcCminwearinput" value="0.00000" placeholder="输入最小磨损" />
+                </div>
+                <div class="criteria-item">
+                    <h4>目标磨损值</h4>
+                    <input id="fcCdesiredfloatinput" placeholder="输入目标磨损" />
+                </div>
+                <div class="criteria-item">
+                    <h4>计算精确度</h4>
+                    <input id="fcCspecificityinput" value="0.00000001" placeholder="输入精确度" />
+                </div>
+            </div>
+
+            <div class="stats-container">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalCombinations">0</div>
+                    <div class="stat-label">总组合数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="processedCombinations">0</div>
+                    <div class="stat-label">已处理</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="foundResults">0</div>
+                    <div class="stat-label">找到结果</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="timeElapsed">0s</div>
+                    <div class="stat-label">耗时</div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="primary" onclick="fcCombinations()">开始计算</button>
+            </div>
+
+            <div class="result-info" id="fcTotalCombosText">等待计算...</div>
+
+            <div id="fcTheProgress">
+                <div id="fcProgressBar"></div>
+            </div>
+
+            <h3 class="section-title">计算结果</h3>
+
+            <div class="search-container">
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <input type="text" id="searchInput" placeholder="在结果中搜索..."
+                        style="flex: 1; min-width: 200px; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px;">
+                    <button onclick="performSearch()" class="primary" style="padding: 8px 16px;">搜索</button>
+                    <button onclick="prevSearch()" class="secondary" style="padding: 8px 12px;">上一个</button>
+                    <button onclick="nextSearch()" class="secondary" style="padding: 8px 12px;">下一个</button>
+                    <span id="searchStatus" style="color: #666; font-size: 14px;">未搜索</span>
+                </div>
+            </div>
+
+            <div id="fcCombinationsText"></div>
+        </div>
+
+        <div id="ieee754Div" class="tabcontent">
+            <h3 class="section-title">IEEE754 浮点数转换</h3>
+            <div class="criteria-container">
+                <div class="criteria-item">
+                    <h4>目标磨损值</h4>
+                    <input id="desiredIEEEInput" placeholder="0.5" onkeyup="updateIeeeRange()" />
+                </div>
+                <div class="criteria-item">
+                    <h4>IEEE754 表示</h4>
+                    <input id="floatIEEEInput" placeholder="0.5" readonly />
+                </div>
+            </div>
+
+            <div class="criteria-container">
+                <div class="criteria-item">
+                    <h4>最小边界值</h4>
+                    <input id="minIEEEinput" placeholder="0.49999998509883925" readonly />
+                </div>
+                <div class="criteria-item">
+                    <h4>最大边界值</h4>
+                    <input id="maxIEEEinput" placeholder="0.500000029802264" readonly />
+                </div>
+                <div class="criteria-item">
+                    <h4>中间值</h4>
+                    <input id="middleIEEEinput" placeholder="0.5000000074505516" readonly />
+                </div>
+            </div>
+        </div>
+
+        <div id="messageToast" class="message-toast"></div>
+
+        <div id="aboutAuthorDiv" class="tabcontent">
+            <h3 class="section-title">盘尼西林</h3>
+
+            <div class="author-container"
+                style="background: var(--card-bg); padding: 30px; border-radius: var(--border-radius); box-shadow: var(--box-shadow);">
+                <div
+                    style="text-align: center; margin-bottom: 40px; padding: 20px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: var(--border-radius);">
+                    <h3 style="color: var(--primary-color); margin-bottom: 20px;">盘尼西林</h3>
+                    <p style="color: var(--text-color); line-height: 1.8; font-size: 16px; margin-bottom: 15px;">
+                        从2017年入坑CSGO，我的游戏技术一直都很差，但是这时候我就对游戏皮肤起了兴趣，特别是炼金。2018年在深海少女吉安娜的带领下，接触了特殊磨损，打开了我新的世界。
+                        短位磨损（0.5,0.0625等）、连续磨损（0.006666666等）、BUG磨损（看似酒精0.3799999952316284实际是破损等）哇学问太多了。但是我不会计算啊，实际上外面已经有一个很牛逼很牛逼的网站了（andersonproescholdbell），
+                        写的巨牛逼，我们都是站在巨人的肩膀上。吉安娜他知道有这个网站，但是不告诉我！我真的是用EXCEL一个一个材料复制粘贴上去凑数，比如先买8把材料，然后算出最后两把平均值，然后去找这两把枪，
+                        比如一个比平均值小一点另一个就要大一点，炼隐秘找不到保密材料就去炼最后一个保密，炼保密找不到受限材料就去找最后一个受限...以此类推哈哈哈。真的很复杂但是乐此不疲，而且以这种笨方法凑出了我的第一把隐秘级特磨枪，是0.5磨损的深海复仇！
+                        后面自己写了粗糙的计算程序，但是材料顺序以及IEEE754转换问题以及计算效率问题一直十分的困扰我，后面我才知道了andersonproescholdbell那个网站，包括材料放的顺序这些问题全部考虑进去了，巨人，膜拜！
+                        后面一度自以为是觉得自己炼金这方面天下无敌。直到了解到诞生远古时期的第一龙狙0.0000133742069时，一瞬间才明白什么是井底之蛙、管中窥豹。现在，全新的材料磨损计算方式，全新的五合一炼金手套和刀皮，是我回报特殊磨损的时候了！
+
+                    </p>
+                    <p style="color: var(--text-color); line-height: 1.8; font-size: 16px;">
+                        少年，特磨的大门为你敞开，迎接你的0.06666666潘多拉手套，迎接你的0.000888888绿宝石蝴蝶刀吧！
+                    </p>
+                </div>
+
+                <div
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 40px;">
+                    <div class="social-card"
+                        style="background: linear-gradient(135deg, #00A1D6 0%, #0084B4 100%); padding: 25px; border-radius: var(--border-radius); text-align: center; color: white; cursor: pointer;"
+                        onclick="window.open('https://space.bilibili.com/161872957', '_blank')">
+                        <div style="font-size: 40px; margin-bottom: 15px;">📺</div>
+                        <h4 style="margin-bottom: 10px; font-weight: 600;">B站主页</h4>
+                        <p style="opacity: 0.9; font-size: 14px; margin-bottom: 15px;">观看我的炼金视频</p>
+                        <button class="primary"
+                            style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); padding: 8px 20px; font-size: 14px;">
+                            访问主页
+                        </button>
+                    </div>
+                    <div class="social-card"
+                        style="background: linear-gradient(135deg, #000000 0%, #333333 100%); padding: 25px; border-radius: var(--border-radius); text-align: center; color: white; cursor: pointer;"
+                        onclick="window.open('https://v.douyin.com/mC58bI0Vdmo/ 7@9.com :1pm', '_blank')">
+                        <div style="font-size: 40px; margin-bottom: 15px;">🎵</div>
+                        <h4 style="margin-bottom: 10px; font-weight: 600;">抖音账号</h4>
+                        <p style="opacity: 0.9; font-size: 14px; margin-bottom: 15px;">关注我的抖音</p>
+                        <button class="primary"
+                            style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); padding: 8px 20px; font-size: 14px;">
+                            访问账号
+                        </button>
+                    </div>
+                    <div class="social-card"
+                        style="background: linear-gradient(135deg, #FF6B35 0%, #FF8E53 100%); padding: 25px; border-radius: var(--border-radius); text-align: center; color: white; cursor: pointer;"
+                        onclick="window.open('https://buff.163.com/shop/U1098252483#tab=selling&game=csgo&page_num=1', '_blank')">
+                        <div style="font-size: 40px; margin-bottom: 15px;">🛒</div>
+                        <h4 style="margin-bottom: 10px; font-weight: 600;">BUFF商店</h4>
+                        <p style="opacity: 0.9; font-size: 14px; margin-bottom: 15px;">王菲</p>
+                        <button class="primary"
+                            style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); padding: 8px 20px; font-size: 14px;">
+                            访问商店
+                        </button>
+                    </div>
+                    <div class="social-card"
+                        style="background: linear-gradient(135deg, #1B2838 0%, #2A475E 100%); padding: 25px; border-radius: var(--border-radius); text-align: center; color: white; cursor: pointer;"
+                        onclick="window.open('https://steamcommunity.com/id/98801', '_blank')">
+                        <div style="font-size: 40px; margin-bottom: 15px;">🎯</div>
+                        <h4 style="margin-bottom: 10px; font-weight: 600;">Steam主页</h4>
+                        <p style="opacity: 0.9; font-size: 14px; margin-bottom: 15px;">添加我为游戏好友</p>
+                        <button class="primary"
+                            style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); padding: 8px 20px; font-size: 14px;">
+                            访问主页
+                        </button>
+                    </div>
+
+                </div>
+                <div
+                    style="margin-top: 30px; padding: 25px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: var(--border-radius); color: white; text-align: center;">
+                    <p style="margin-bottom: 20px; opacity: 0.9; line-height: 1.6; font-size: 16px;">
+                        感谢你的使用！如果这个工具对你有帮助，欢迎通过以上平台关注我。<br>
+                        Q群交流：6800808
+                    </p>
+                </div>
+
+                <div style="margin-top: 25px; text-align: center; color: var(--secondary-color); font-size: 13px;">
+                    <p>感谢每一位使用者，感谢我的粉丝</p>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            let MATERIAL_COUNT = 5;
+            let MATERIAL_TYPE_COUNT = 1;
+            let materialData = {};
+            let calculationStartTime = 0;
+            let calculationStats = {
+                total: 0,
+                processed: 0,
+                found: 0
+            };
+            let searchTerm = '';
+            let currentSearchIndex = -1;
+            let searchResults = [];
+
+            const DEFAULT_VALUES = {
+                MIN_WEAR: '0.00',
+                MAX_WEAR: '0.80',
+                SPECIFICITY: '0.00000001'
+            };
+
+            const Utils = {
+                getIEEE754: function (x) {
+                    var float = new Float32Array(1);
+                    float[0] = x;
+                    return float[0];
+                },
+
+                combinations: function (n, k) {
+                    if (k > n) return 0;
+                    if (k === 0 || k === n) return 1;
+
+                    k = Math.min(k, n - k);
+                    let result = 1;
+                    for (let i = 1; i <= k; i++) {
+                        result = result * (n - k + i) / i;
+                    }
+                    return Math.round(result);
+                }
+            };
+
+            function showMessage(message, type = 'info') {
+                const toast = document.getElementById('messageToast');
+                toast.textContent = message;
+                toast.className = 'message-toast';
+                toast.classList.add(type);
+                toast.classList.add('show');
+
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+
+            function setLoadingState(loading) {
+                const buttons = document.querySelectorAll('button');
+                buttons.forEach(btn => {
+                    if (!btn.classList.contains('tabButton')) {
+                        btn.disabled = loading;
+                    }
+                });
+
+                if (loading) {
+                    document.body.classList.add('loading');
+                } else {
+                    document.body.classList.remove('loading');
+                }
+            }
+
+            function updateStats() {
+                document.getElementById('totalCombinations').textContent = calculationStats.total.toLocaleString();
+                document.getElementById('processedCombinations').textContent = calculationStats.processed.toLocaleString();
+                document.getElementById('foundResults').textContent = calculationStats.found.toLocaleString();
+
+                if (calculationStartTime > 0) {
+                    const elapsed = Math.round((Date.now() - calculationStartTime) / 1000);
+                    document.getElementById('timeElapsed').textContent = `${elapsed}s`;
+                }
+            }
+
+            function initSearch() {
+                const searchContainer = document.createElement('div');
+                searchContainer.className = 'search-container';
+                searchContainer.style.cssText = `
+                margin: 15px 0;
+                padding: 15px;
+                background: #f8f9fa;
+                border-radius: 8px;
+                border: 1px solid #dee2e6;
+            `;
+
+                searchContainer.innerHTML = `
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <input type="text" id="searchInput" placeholder="在结果中搜索..." 
+                           style="flex: 1; min-width: 200px; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px;">
+                    <button onclick="performSearch()" class="primary" style="padding: 8px 16px;">搜索</button>
+                    <button onclick="prevSearch()" class="secondary" style="padding: 8px 12px;">上一个</button>
+                    <button onclick="nextSearch()" class="secondary" style="padding: 8px 12px;">下一个</button>
+                    <span id="searchStatus" style="color: #666; font-size: 14px;">未搜索</span>
+                </div>
+            `;
+
+                const combinationsText = document.getElementById("fcCombinationsText");
+                combinationsText.parentNode.insertBefore(searchContainer, combinationsText);
+                document.getElementById('searchInput').addEventListener('keypress', function (e) {
+                    if (e.key === 'Enter') {
+                        performSearch();
+                    }
+                });
+            }
+
+            function performSearch() {
+                const searchInput = document.getElementById('searchInput');
+                searchTerm = searchInput.value.trim();
+
+                if (!searchTerm) {
+                    showMessage('请输入搜索内容', 'error');
+                    document.querySelectorAll('.search-highlight').forEach(el => {
+                        el.classList.remove('search-highlight');
+                    });
+                    document.getElementById('searchStatus').textContent = '未搜索';
+                    return;
+                }
+
+                const results = document.querySelectorAll('.real-time-result');
+                searchResults = [];
+
+                results.forEach((result, index) => {
+                    if (result.textContent.toLowerCase().includes(searchTerm.toLowerCase())) {
+                        searchResults.push(index);
+                    }
+                });
+
+                const searchStatus = document.getElementById('searchStatus');
+                if (searchResults.length === 0) {
+                    searchStatus.textContent = `未找到包含 "${searchTerm}" 的结果`;
+                    searchStatus.style.color = '#dc3545';
+                    currentSearchIndex = -1;
+                    document.querySelectorAll('.search-highlight').forEach(el => {
+                        el.classList.remove('search-highlight');
+                    });
+                } else {
+                    searchStatus.textContent = `找到 ${searchResults.length} 个结果`;
+                    searchStatus.style.color = '#28a745';
+                    currentSearchIndex = 0;
+                    highlightCurrentSearch();
+                }
+            }
+
+            function prevSearch() {
+                if (searchResults.length === 0) return;
+
+                currentSearchIndex = (currentSearchIndex - 1 + searchResults.length) % searchResults.length;
+                highlightCurrentSearch();
+            }
+
+            function nextSearch() {
+                if (searchResults.length === 0) return;
+
+                currentSearchIndex = (currentSearchIndex + 1) % searchResults.length;
+                highlightCurrentSearch();
+            }
+
+            function highlightCurrentSearch() {
+                document.querySelectorAll('.search-highlight').forEach(el => {
+                    el.classList.remove('search-highlight');
+                });
+
+                if (currentSearchIndex >= 0 && currentSearchIndex < searchResults.length) {
+                    const results = document.querySelectorAll('.real-time-result');
+                    const currentResult = results[searchResults[currentSearchIndex]];
+
+                    currentResult.classList.add('search-highlight');
+
+                    currentResult.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                    document.getElementById('searchStatus').textContent =
+                        `找到 ${searchResults.length} 个结果 (${currentSearchIndex + 1}/${searchResults.length})`;
+                }
+            }
+
+            let batchResults = [];
+            const BATCH_SIZE = 1000;
+
+            function addToBatch(wear, materialsText, isExactMatch) {
+                const wearClass = isExactMatch ? 'exact-match-highlight' : 'normal-wear';
+
+                batchResults.push(`
+        <div class="real-time-result">
+            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                <div style="flex-shrink: 0;">
+                    <strong>磨损:</strong> <span class="${wearClass}">${wear}</span>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <strong>组合:</strong> ${materialsText}
+                </div>
+            </div>
+        </div>
+    `);
+
+                if (batchResults.length >= BATCH_SIZE) {
+                    flushBatch();
+                }
+            }
+
+            function flushBatch() {
+                if (batchResults.length === 0) return;
+
+                const combinationstext = document.getElementById("fcCombinationsText");
+
+                const fragment = document.createDocumentFragment();
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = batchResults.join('');
+
+                while (tempDiv.firstChild) {
+                    fragment.appendChild(tempDiv.firstChild);
+                }
+
+                combinationstext.appendChild(fragment);
+                combinationstext.scrollTop = combinationstext.scrollHeight;
+
+                batchResults = [];
+            }
+
+            function initMaterialTypes() {
+                for (let i = 1; i <= 5; i++) {
+                    if (!materialData[i]) {
+                        materialData[i] = {
+                            input: '',
+                            output: '',
+                            cumulative: '',
+                            minWear: DEFAULT_VALUES.MIN_WEAR,
+                            maxWear: DEFAULT_VALUES.MAX_WEAR
+                        };
+                    }
+                }
+
+                const selectElement = document.getElementById('materialTypeCountSelect');
+                if (selectElement) {
+                    selectElement.value = '1';
+                    MATERIAL_TYPE_COUNT = 1;
+                }
+            }
+
+            function saveMaterialData(index) {
+                if (materialData[index]) {
+                    materialData[index].input = document.getElementById(`fcAltInput${index}`)?.value || '';
+                    materialData[index].output = document.getElementById(`fcOutput${index}`)?.value || '';
+                    materialData[index].cumulative = document.getElementById(`fcCumulative${index}`)?.value || '';
+                    materialData[index].minWear = document.getElementById(`materialMinWear${index}`)?.value || DEFAULT_VALUES.MIN_WEAR;
+                    materialData[index].maxWear = document.getElementById(`materialMaxWear${index}`)?.value || DEFAULT_VALUES.MAX_WEAR;
+                }
+            }
+
+            function restoreMaterialData(index) {
+                if (materialData[index]) {
+                    const inputElem = document.getElementById(`fcAltInput${index}`);
+                    const outputElem = document.getElementById(`fcOutput${index}`);
+                    const cumulativeElem = document.getElementById(`fcCumulative${index}`);
+                    const minWearElem = document.getElementById(`materialMinWear${index}`);
+                    const maxWearElem = document.getElementById(`materialMaxWear${index}`);
+
+                    if (inputElem) inputElem.value = materialData[index].input;
+                    if (outputElem) outputElem.value = materialData[index].output;
+                    if (cumulativeElem) cumulativeElem.value = materialData[index].cumulative;
+                    if (minWearElem) minWearElem.value = materialData[index].minWear;
+                    if (maxWearElem) maxWearElem.value = materialData[index].maxWear;
+                }
+            }
+
+            function updateMaterialCount() {
+                MATERIAL_COUNT = parseInt(document.getElementById('materialCountSelect').value);
+                console.log("材料数量已更新为:", MATERIAL_COUNT);
+                fcUpdateCombinations();
+            }
+
+            function updateMaterialTypeCount() {
+                const newCount = parseInt(document.getElementById('materialTypeCountSelect').value);
+
+                for (let i = 1; i <= MATERIAL_TYPE_COUNT; i++) {
+                    saveMaterialData(i);
+                }
+
+                MATERIAL_TYPE_COUNT = newCount;
+                const containers = document.getElementById('materialTypeContainers');
+                containers.innerHTML = '';
+
+                for (let i = 1; i <= newCount; i++) {
+                    createMaterialTypeContainer(i);
+                }
+            }
+
+            function createMaterialTypeContainer(index) {
+                const containers = document.getElementById('materialTypeContainers');
+
+                const container = document.createElement('div');
+                container.className = 'material-type-container';
+                container.id = `materialType${index}`;
+                container.innerHTML = `
+                <div class="material-type-header">
+                    <div class="material-type-color material-type-${index}"></div>
+                    <h4>材料种类 ${index}</h4>
+                </div>
+                <textarea id="fcAltInput${index}" class="material-type-textarea" placeholder="输入材料种类 ${index} 的磨损数据..."></textarea>
+                <div class="material-type-buttons">
+                    <button class="primary" onclick="extractAndShowFloats(${index})">提取数据</button>
+                </div>
+                <textarea id="fcOutput${index}" class="material-type-output" readonly placeholder="提取的材料数据将显示在这里"></textarea>
+                <textarea id="fcCumulative${index}" class="material-type-output" readonly placeholder="累计的材料数据将显示在这里"></textarea>
+                <div class="material-type-buttons">
+                    <button class="secondary" onclick="copyResults(${index})">复制数据</button>
+                    <button class="primary" onclick="mergeToTotalInput(${index})">汇总数据</button>
+                    <button class="secondary" onclick="clearMaterialType(${index})">清除数据</button>
+                </div>
+                <div class="material-wear-range">
+                    <div>
+                        <h4>材料最小磨损</h4>
+                        <input id="materialMinWear${index}" value="${DEFAULT_VALUES.MIN_WEAR}" placeholder="最小磨损" />
+                    </div>
+                    <div>
+                        <h4>材料最大磨损</h4>
+                        <input id="materialMaxWear${index}" value="${DEFAULT_VALUES.MAX_WEAR}" placeholder="最大磨损" />
+                    </div>
+                </div>
+            `;
+                containers.appendChild(container);
+                restoreMaterialData(index);
+            }
+
+            function normalizeMaterialWear(wearValue, materialTypeIndex) {
+                const materialMinWear = Utils.getIEEE754(Number(document.getElementById(`materialMinWear${materialTypeIndex}`).value) || 0.00);
+                const materialMaxWear = Utils.getIEEE754(Number(document.getElementById(`materialMaxWear${materialTypeIndex}`).value) || 0.80);
+
+                const normalized = Utils.getIEEE754((wearValue - materialMinWear) / (materialMaxWear - materialMinWear));
+                return normalized;
+            }
+
+            function mergeToTotalInput(materialTypeIndex) {
+                const cumulativeResults = document.getElementById(`fcCumulative${materialTypeIndex}`).value;
+                const totalInput = document.getElementById("fcAltInput");
+
+                if (!cumulativeResults) {
+                    showMessage(`材料种类 ${materialTypeIndex} 没有数据可汇总`, 'error');
+                    return;
+                }
+
+                const markedData = cumulativeResults.split(',').map(item => {
+                    const trimmed = item.trim();
+                    return trimmed ? `${trimmed}|${materialTypeIndex}` : '';
+                }).filter(item => item).join(', ');
+
+                const currentTotalData = totalInput.value.split(',').map(item => {
+                    const parts = item.trim().split('|');
+                    return parts[0];
+                }).filter(item => item);
+
+                const cumulativeArray = cumulativeResults.split(',').map(item => item.trim()).filter(item => item);
+                const existingSet = new Set(currentTotalData);
+                const newData = cumulativeArray.filter(item => !existingSet.has(item));
+
+                if (newData.length === 0) {
+                    showMessage(`材料种类 ${materialTypeIndex} 的数据已经全部汇总过了`, 'info');
+                    return;
+                }
+
+                const newMarkedData = newData.map(item => `${item}|${materialTypeIndex}`).join(', ');
+
+                if (totalInput.value) {
+                    totalInput.value += ", " + newMarkedData;
+                } else {
+                    totalInput.value = newMarkedData;
+                }
+
+                showMessage(`材料种类 ${materialTypeIndex} 的 ${newData.length} 条新数据已汇总到总数据中`, 'success');
+            }
+
+            function validateInputs() {
+                const maxWear = parseFloat(document.getElementById('fcCmaxwearinput').value);
+                const minWear = parseFloat(document.getElementById('fcCminwearinput').value);
+                const desiredFloat = parseFloat(document.getElementById('fcCdesiredfloatinput').value);
+                const specificity = parseFloat(document.getElementById('fcCspecificityinput').value);
+
+                if (isNaN(maxWear) || isNaN(minWear) || isNaN(desiredFloat) || isNaN(specificity)) {
+                    showMessage('请输入有效的数值', 'error');
+                    return false;
+                }
+
+                if (minWear >= maxWear) {
+                    showMessage('最小磨损必须小于最大磨损', 'error');
+                    return false;
+                }
+
+                if (specificity === 0 && isNaN(desiredFloat)) {
+                    showMessage('精确度为0时，必须输入有效的目标磨损值', 'error');
+                    return false;
+                }
+
+                return true;
+            }
+
+            async function fcGetCombinations(arr, originalArr, materialTypes) {
+                batchResults = [];
+
+                const combinationstext = document.getElementById("fcCombinationsText");
+                const progress_bar = document.getElementById("fcProgressBar");
+                const total_combos = Utils.combinations(arr.length, MATERIAL_COUNT);
+                const max_wear = Utils.getIEEE754(Number(document.getElementById('fcCmaxwearinput').value));
+                const min_wear = Utils.getIEEE754(Number(document.getElementById('fcCminwearinput').value));
+                const desired_ieee = Utils.getIEEE754(Number(document.getElementById('fcCdesiredfloatinput').value));
+                const desired_float = Number(document.getElementById('fcCdesiredfloatinput').value);
+                const specificity = Number(document.getElementById('fcCspecificityinput').value);
+
+                calculationStats.total = total_combos;
+                calculationStats.processed = 0;
+                calculationStats.found = 0;
+                updateStats();
+
+                let progress = 0;
+                let bestWear = 1000;
+                let lastUpdateTime = Date.now();
+
+                const rows = [];
+                const positions = [];
+
+                for (let i = 0; i < MATERIAL_COUNT; i++) {
+                    const copy = arr.slice(0);
+                    rows.push(copy);
+                    positions.push(i);
+                }
+
+                let done = false;
+
+                while (!done) {
+                    let combo = [];
+                    let originalCombo = [];
+                    let materialTypeCombo = [];
+
+                    for (let row = 0; row < rows.length; row++) {
+                        combo.push(rows[row][positions[row]]);
+                        originalCombo.push(originalArr[positions[row]]);
+                        materialTypeCombo.push(materialTypes[positions[row]]);
+                    }
+
+                    let undefinedCount = 0;
+                    for (let i = 0; i < combo.length; i++) {
+                        if (combo[i] === undefined) {
+                            undefinedCount++;
+                        }
+                    }
+                    if (undefinedCount >= MATERIAL_COUNT) {
+                        done = true;
+                    }
+
+                    if (combo.indexOf(undefined) < 0) {
+                        let normalizedSum = 0;
+                        for (let i = 0; i < MATERIAL_COUNT; i++) {
+                            normalizedSum = Utils.getIEEE754(normalizedSum + combo[i]);
+                        }
+
+                        let avgNormalized = Utils.getIEEE754(normalizedSum / Utils.getIEEE754(MATERIAL_COUNT));
+                        let wear = Utils.getIEEE754(min_wear + Utils.getIEEE754(avgNormalized * Utils.getIEEE754(max_wear - min_wear)));
+
+                        const isExactMatch = (specificity === 0 && wear == desired_ieee) ||
+                            (specificity === 0 && truncateDecimals(wear, countDecimals(desired_float)) == desired_float) ||
+                            (wear == desired_ieee); 
+
+                        if (isExactMatch || (wear >= desired_ieee && wear <= (Number(desired_ieee) + Number(specificity)))) {
+                            const materialsText = originalCombo.map((val, index) => {
+                                const typeIndex = materialTypeCombo[index];
+                                return `<span class="text-material-type-${typeIndex}">${Utils.getIEEE754(val)}</span>`;
+                            }).join(' + ');
+
+                            addToBatch(wear, materialsText, isExactMatch);
+                            calculationStats.found++;
+
+                            if (wear < bestWear) {
+                                bestWear = wear;
+                            }
+                        }
+
+                        progress++;
+                        calculationStats.processed = progress;
+                    }
+
+                    positions[rows.length - 1]++;
+                    for (let a = positions.length - 1; a >= 0; a -= 1) {
+                        if (positions[a] >= arr.length) {
+                            if (a - 1 >= 0) {
+                                positions[a - 1]++;
+                                for (let b = a; b < positions.length; b++) {
+                                    positions[b] = positions[b - 1] + 1;
+                                }
+                            }
+                        }
+                    }
+
+                    const currentTime = Date.now();
+                    if (currentTime - lastUpdateTime > 100 || progress % 500000 === 0) {
+                        const percent_done = ((progress / total_combos) * 100).toFixed(2);
+                        progress_bar.style.width = percent_done + '%';
+                        updateStats();
+                        lastUpdateTime = currentTime;
+
+                        flushBatch();
+
+                        if (progress % 500000 === 0) {
+                            await new Promise(resolve => setTimeout(resolve, 10));
+                        }
+                    }
+
+                    if (progress >= total_combos) {
+                        done = true;
+                    }
+                }
+
+                flushBatch();
+                progress_bar.style.width = '100%';
+                setLoadingState(false);
+                updateStats();
+
+                if (calculationStats.found === 0) {
+                    combinationstext.innerHTML = '<div style="text-align: center; padding: 20px; color: #dc3545;">未找到符合条件的组合</div>';
+                } else {
+                    showMessage(`计算完成! 共找到 ${calculationStats.found.toLocaleString()} 个结果`, 'success');
+                }
+            }
+
+            function fcCombinations() {
+                if (!validateInputs()) return;
+
+                calculationStartTime = Date.now();
+                setLoadingState(true);
+
+                fcProgressBar.style.width = '0%';
+
+                const altFloats = document.getElementById("fcAltInput").value;
+
+                let originalFloatList = [];
+                let floatList = [];
+                let materialTypeList = [];
+
+                if (altFloats && altFloats.trim() !== '') {
+                    altFloats.split(',').forEach(item => {
+                        const parts = item.trim().split('|');
+                        const current = parseFloat(parts[0]);
+                        const materialType = parts[1] ? parseInt(parts[1]) : 1;
+
+                        if (!isNaN(current) && current % 1 !== 0) {
+                            originalFloatList.push(current);
+                            floatList.push(normalizeMaterialWear(current, materialType));
+                            materialTypeList.push(materialType);
+                        }
+                    });
+                } else {
+                    showMessage('请先在数据处理框中输入材料数据！', 'error');
+                    setLoadingState(false);
+                    return;
+                }
+
+                if (floatList.length >= MATERIAL_COUNT) {
+                    const totalCombos = Utils.combinations(floatList.length, MATERIAL_COUNT);
+                    fcTotalCombosText.textContent = `可能有这么多结果: ${totalCombos} (实际材料数: ${floatList.length})`;
+
+                    fcGetCombinations(floatList, originalFloatList, materialTypeList);
+                } else {
+                    showMessage(`最少需要输入${MATERIAL_COUNT}个材料，或者哪里搞错咯?`, 'error');
+                    setLoadingState(false);
+                }
+            }
+
+            function fcUpdateCombinations() {
+                const totalcombostext = document.getElementById("fcTotalCombosText");
+                const altFloats = document.getElementById("fcAltInput").value;
+
+                let float_list = [];
+
+                if (altFloats && altFloats.trim() !== '') {
+                    altFloats.split(',').forEach(item => {
+                        const parts = item.trim().split('|');
+                        const current = parseFloat(parts[0]);
+                        if (!isNaN(current) && current % 1 !== 0) {
+                            float_list.push(current);
+                        }
+                    });
+                }
+
+                if (float_list.length >= MATERIAL_COUNT) {
+                    const total_combos = Utils.combinations(float_list.length, MATERIAL_COUNT);
+                    totalcombostext.innerHTML = "可能有这么多结果: " + total_combos;
+                } else {
+                    totalcombostext.innerHTML = "等待计算...";
+                }
+            }
+
+            function extractFloats(input) {
+                const regex = /\b0\.\d{4,}\b/g;
+                const matches = input.match(regex);
+                return matches ? matches.join(", ") : null;
+            }
+
+            function extractAndShowFloats(materialTypeIndex) {
+                const inputText = document.getElementById(`fcAltInput${materialTypeIndex}`).value;
+                const outputText = document.getElementById(`fcOutput${materialTypeIndex}`);
+                const cumulativeResults = document.getElementById(`fcCumulative${materialTypeIndex}`);
+
+                const extractedFloats = extractFloats(inputText);
+                if (!extractedFloats) {
+                    showMessage('未找到有效的磨损数据', 'error');
+                    return;
+                }
+
+                outputText.value = extractedFloats;
+
+                if (cumulativeResults.value) {
+                    cumulativeResults.value += ", " + extractedFloats;
+                } else {
+                    cumulativeResults.value = extractedFloats;
+                }
+
+                document.getElementById(`fcAltInput${materialTypeIndex}`).value = "";
+
+                saveMaterialData(materialTypeIndex);
+                showMessage(`材料种类 ${materialTypeIndex} 数据提取成功`, 'success');
+            }
+
+            function copyResults(materialTypeIndex) {
+                const cumulativeResults = document.getElementById(`fcCumulative${materialTypeIndex}`);
+                cumulativeResults.select();
+                cumulativeResults.setSelectionRange(0, 99999);
+                document.execCommand("copy");
+                showMessage(`材料种类 ${materialTypeIndex} 数据已复制`, 'success');
+            }
+
+            function clearMaterialType(materialTypeIndex) {
+                document.getElementById(`fcAltInput${materialTypeIndex}`).value = "";
+                document.getElementById(`fcOutput${materialTypeIndex}`).value = "";
+                document.getElementById(`fcCumulative${materialTypeIndex}`).value = "";
+
+                saveMaterialData(materialTypeIndex);
+                showMessage(`材料种类 ${materialTypeIndex} 数据已清除`, 'info');
+            }
+
+            function clearAllMaterialTypes() {
+                for (let i = 1; i <= MATERIAL_TYPE_COUNT; i++) {
+                    document.getElementById(`fcAltInput${i}`).value = "";
+                    document.getElementById(`fcOutput${i}`).value = "";
+                    document.getElementById(`fcCumulative${i}`).value = "";
+                    saveMaterialData(i);
+                }
+                document.getElementById("fcAltInput").value = "";
+                document.getElementById("fcTotalCombosText").textContent = "等待计算...";
+                document.getElementById("fcCombinationsText").innerHTML = "";
+                document.getElementById("fcProgressBar").style.width = '0%';
+                calculationStats.total = 0;
+                calculationStats.processed = 0;
+                calculationStats.found = 0;
+                updateStats();
+                showMessage('所有材料数据已清除', 'info');
+            }
+
+            function updateIeeeRange() {
+                const desiredFloat = Number(document.getElementById("desiredIEEEInput").value);
+                const desiredIEEE = Utils.getIEEE754(desiredFloat);
+                document.getElementById("floatIEEEInput").value = desiredIEEE;
+
+                let minIEEE = desiredIEEE;
+                while (Utils.getIEEE754(minIEEE - 0.0000000000001) === desiredIEEE) {
+                    minIEEE -= 0.0000000000001;
+                }
+                document.getElementById("minIEEEinput").value = minIEEE;
+
+                let maxIEEE = desiredIEEE;
+                while (Utils.getIEEE754(maxIEEE + 0.0000000000001) === desiredIEEE) {
+                    maxIEEE += 0.0000000000001;
+                }
+                document.getElementById("maxIEEEinput").value = maxIEEE;
+
+                document.getElementById("middleIEEEinput").value = (minIEEE + maxIEEE) / 2;
+            }
+
+            function openTab(tabName) {
+                var i, tabcontent, tabbutton;
+                tabcontent = document.getElementsByClassName("tabcontent");
+                tabbutton = document.getElementsByClassName("tabButton");
+                for (i = 0; i < tabcontent.length; i++) {
+                    tabcontent[i].style.display = "none";
+                    tabbutton[i].classList.remove('active');
+                }
+                document.getElementById(tabName).style.display = "block";
+                event.currentTarget.classList.add('active');
+            }
+
+            truncateDecimals = function (number, digits) {
+                var multiplier = Math.pow(10, digits),
+                    adjustedNum = number * multiplier,
+                    truncatedNum = Math[adjustedNum < 0 ? 'ceil' : 'floor'](adjustedNum);
+                return truncatedNum / multiplier;
+            };
+
+            var countDecimals = function (value) {
+                if (Math.floor(value) === value) return 0;
+                return value.toString().split(".")[1].length || 0;
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                initMaterialTypes();
+            });
+        </script>
+</body>
+
+</html>
