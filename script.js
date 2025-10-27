@@ -426,7 +426,7 @@ async function fcGetCombinations(arr, originalArr, materialTypes) {
     }
 
     let done = false;
-
+    const updateFrequency = MATERIAL_COUNT === 10 ? 1000000 : 50000;
     while (!done) {
         let combo = [];
         let originalCombo = [];
@@ -492,7 +492,7 @@ async function fcGetCombinations(arr, originalArr, materialTypes) {
         }
 
         const currentTime = Date.now();
-        if (currentTime - lastUpdateTime > 100 || progress % 500000 === 0) {
+        if (currentTime - lastUpdateTime > 100 || progress % updateFrequency === 0) {
             const percent_done = ((progress / total_combos) * 100).toFixed(2);
             progress_bar.style.width = percent_done + '%';
             updateStats();
@@ -500,7 +500,7 @@ async function fcGetCombinations(arr, originalArr, materialTypes) {
 
             flushBatch();
 
-            if (progress % 500000 === 0) {
+            if (progress % updateFrequency === 0) {
                 await new Promise(resolve => setTimeout(resolve, 10));
             }
         }
@@ -523,13 +523,31 @@ async function fcGetCombinations(arr, originalArr, materialTypes) {
 }
 
 function fcCombinations() {
+    setLoadingState(false);
+    batchResults = [];
+    calculationStats = {
+        total: 0,
+        processed: 0,
+        found: 0
+    };
+    const combinationstext = document.getElementById("fcCombinationsText");
+    combinationstext.innerHTML = '';
+    
+    const progressBar = document.getElementById("fcProgressBar");
+    progressBar.style.width = '0%';
+    updateStats();
+    setTimeout(() => {
+        if (!validateInputs()) return;
+        
+        calculationStartTime = Date.now();
+        setLoadingState(true);
     if (!validateInputs()) return;
 
     calculationStartTime = Date.now();
     setLoadingState(true);
 
-    const progressBar = document.getElementById("fcProgressBar");  // 修正
-    const fcTotalCombosText = document.getElementById("fcTotalCombosText");  // 修正
+    const progressBar = document.getElementById("fcProgressBar");  
+    const fcTotalCombosText = document.getElementById("fcTotalCombosText");  
     progressBar.style.width = '0%';
 
     const altFloats = document.getElementById("fcAltInput").value;
@@ -565,6 +583,7 @@ function fcCombinations() {
         showMessage(`最少需要输入${MATERIAL_COUNT}个材料，或者哪里搞错咯?`, 'error');
         setLoadingState(false);
     }
+ }, 0);
 }
 
 function fcUpdateCombinations() {
