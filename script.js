@@ -394,7 +394,6 @@ function validateInputs() {
 
     return true;
 }
-
 async function fcGetCombinations(arr, originalArr, materialTypes) {
     batchResults = [];
 
@@ -722,4 +721,15 @@ var countDecimals = function (value) {
 
 document.addEventListener('DOMContentLoaded', function () {
     initMaterialTypes();
+    const materialCountSelect = document.getElementById('materialCountSelect');
+    if (materialCountSelect) {
+        MATERIAL_COUNT = parseInt(materialCountSelect.value);
+        console.log("页面加载，材料数量设置为:", MATERIAL_COUNT);
+    }
+    const materialTypeCountSelect = document.getElementById('materialTypeCountSelect');
+    if (materialTypeCountSelect) {
+        MATERIAL_TYPE_COUNT = parseInt(materialTypeCountSelect.value);
+        console.log("页面加载，材料种类数量设置为:", MATERIAL_TYPE_COUNT);
+    }
+    fcUpdateCombinations();
 });
