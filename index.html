@@ -2,16 +2,18 @@
 <html lang="zh-CN">
 
 <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>西林磨损计算器</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="%E8%A5%BF%E6%9E%97%E7%A3%A8%E6%8D%9F%E8%AE%A1%E7%AE%97%E5%99%A8_files/style.css">
 </head>
 
 <body>
     <div class="container">
         <div class="tab">
-            <button class="tabButton active" onclick="openTab('floatCombosDiv')">磨损计算</button>
+            <button class="tabButton active" onclick="openTab('floatCombosDiv')">特殊磨损计算</button>
+            <button class="tabButton" onclick="openTab('wearCalculationDiv')">简易计算</button>
             <button class="tabButton" onclick="openTab('ieee754Div')">IEEE754转换</button>
             <button class="tabButton" onclick="openTab('aboutAuthorDiv')">盘尼西林</button>
         </div>
@@ -123,6 +125,7 @@
 
             <div class="action-buttons">
                 <button class="primary" onclick="fcCombinations()">开始计算</button>
+                <button class="danger" id="stopButton" onclick="terminateCalculation()" disabled>终止计算</button>
             </div>
 
             <div class="result-info" id="fcTotalCombosText">等待计算...</div>
@@ -146,7 +149,60 @@
 
             <div id="fcCombinationsText"></div>
         </div>
+        <div id="wearCalculationDiv" class="tabcontent">
+            <h3 class="section-title">简易磨损计算</h3>
 
+            <div class="selector-group">
+                <div class="selector-container">
+                    <h4>选择材料数量</h4>
+                    <select id="simpleMaterialCount" onchange="updateSimpleMaterialInputs()">
+                        <option value="5" selected="selected">5个材料</option>
+                        <option value="10">10个材料</option>
+                    </select>
+                </div>
+            </div>
+
+            <h3 class="section-title">材料列表</h3>
+            <div class="table-container">
+                <table class="material-table">
+                    <thead>
+                        <tr>
+                            <th width="60">序号</th>
+                            <th width="200">磨损值</th>
+                            <th width="100">Min</th>
+                            <th width="100">Max</th>
+                        </tr>
+                    </thead>
+                    <tbody id="materialTableBody">
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 class="section-title">目标产物设置</h3>
+            <div class="criteria-container">
+                <div class="criteria-item">
+                    <h4>目标产物Min</h4>
+                    <input type="text" id="targetProductMin" placeholder="0.00" oninput="validateNumber(this)">
+                </div>
+                <div class="criteria-item">
+                    <h4>目标产物Max</h4>
+                    <input type="text" id="targetProductMax" placeholder="1.00" oninput="validateNumber(this)">
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="primary" onclick="calculateSimpleWear()">开始计算</button>
+                <button class="secondary" onclick="clearSimpleInputs()">清除输入</button>
+            </div>
+
+            <h3 class="section-title">计算结果</h3>
+            <div class="result-container">
+                <div class="result-item">
+                    <h4>计算出的产物磨损</h4>
+                    <div id="resultWear" class="result-value">等待计算...</div>
+                </div>
+            </div>
+        </div>
         <div id="ieee754Div" class="tabcontent">
             <h3 class="section-title">IEEE754 浮点数转换</h3>
             <div class="criteria-container">
@@ -274,7 +330,9 @@
             </div>
         </div>
     </div>
-    <script src="script.js"></script>
+    <script src="%E8%A5%BF%E6%9E%97%E7%A3%A8%E6%8D%9F%E8%AE%A1%E7%AE%97%E5%99%A8_files/script.js"></script>
+
+
 </body>
 
 </html>

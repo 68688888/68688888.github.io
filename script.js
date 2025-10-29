@@ -10,7 +10,10 @@ let calculationStats = {
 let searchTerm = '';
 let currentSearchIndex = -1;
 let searchResults = [];
-
+let calculationInProgress = false;
+let calculationTerminated = false;
+let currentCalculation = null;
+let simpleMaterialCount = 5;
 const DEFAULT_VALUES = {
     MIN_WEAR: '0.00',
     MAX_WEAR: '0.80',
@@ -396,6 +399,12 @@ function validateInputs() {
 }
 async function fcGetCombinations(arr, originalArr, materialTypes) {
     batchResults = [];
+    calculationTerminated = false;
+    currentCalculation = {
+        arr: arr,
+        originalArr: originalArr,
+        materialTypes: materialTypes
+    };
 
     const combinationstext = document.getElementById("fcCombinationsText");
     const progress_bar = document.getElementById("fcProgressBar");
@@ -426,7 +435,13 @@ async function fcGetCombinations(arr, originalArr, materialTypes) {
 
     let done = false;
     const updateFrequency = MATERIAL_COUNT === 10 ? 1000000 : 50000;
-    while (!done) {
+
+    while (!done && !calculationTerminated) {
+        // 每次循环开始检查是否终止
+        if (calculationTerminated) {
+            break;
+        }
+
         let combo = [];
         let originalCombo = [];
         let materialTypeCombo = [];
@@ -447,7 +462,7 @@ async function fcGetCombinations(arr, originalArr, materialTypes) {
             done = true;
         }
 
-        if (combo.indexOf(undefined) < 0) {
+        if (combo.indexOf(undefined) < 0 && !calculationTerminated) {
             let normalizedSum = 0;
             for (let i = 0; i < MATERIAL_COUNT; i++) {
                 normalizedSum = Utils.getIEEE754(normalizedSum + combo[i]);
@@ -478,20 +493,22 @@ async function fcGetCombinations(arr, originalArr, materialTypes) {
             calculationStats.processed = progress;
         }
 
-        positions[rows.length - 1]++;
-        for (let a = positions.length - 1; a >= 0; a -= 1) {
-            if (positions[a] >= arr.length) {
-                if (a - 1 >= 0) {
-                    positions[a - 1]++;
-                    for (let b = a; b < positions.length; b++) {
-                        positions[b] = positions[b - 1] + 1;
+        if (!calculationTerminated) {
+            positions[rows.length - 1]++;
+            for (let a = positions.length - 1; a >= 0; a -= 1) {
+                if (positions[a] >= arr.length) {
+                    if (a - 1 >= 0) {
+                        positions[a - 1]++;
+                        for (let b = a; b < positions.length; b++) {
+                            positions[b] = positions[b - 1] + 1;
+                        }
                     }
                 }
             }
         }
 
         const currentTime = Date.now();
-        if (currentTime - lastUpdateTime > 100 || progress % updateFrequency === 0) {
+        if ((currentTime - lastUpdateTime > 100 || progress % updateFrequency === 0) && !calculationTerminated) {
             const percent_done = ((progress / total_combos) * 100).toFixed(2);
             progress_bar.style.width = percent_done + '%';
             updateStats();
@@ -508,20 +525,38 @@ async function fcGetCombinations(arr, originalArr, materialTypes) {
             done = true;
         }
     }
-
     flushBatch();
-    progress_bar.style.width = '100%';
-    setLoadingState(false);
-    updateStats();
 
-    if (calculationStats.found === 0) {
-        combinationstext.innerHTML = '<div style="text-align: center; padding: 20px; color: #dc3545;">未找到符合条件的组合</div>';
+    if (calculationTerminated) {
+        const percent_done = ((progress / total_combos) * 100).toFixed(2);
+        progress_bar.style.width = percent_done + '%';
+        updateStats();
+        showMessage(`计算已终止，已处理 ${progress.toLocaleString()} 个组合，找到 ${calculationStats.found.toLocaleString()} 个结果`, 'info');
     } else {
-        showMessage(`计算完成! 共找到 ${calculationStats.found.toLocaleString()} 个结果`, 'success');
+        progress_bar.style.width = '100%';
+        if (calculationStats.found === 0) {
+            combinationstext.innerHTML = '<div style="text-align: center; padding: 20px; color: #dc3545;">未找到符合条件的组合</div>';
+        } else {
+            showMessage(`计算完成! 共找到 ${calculationStats.found.toLocaleString()} 个结果`, 'success');
+        }
     }
+
+    setLoadingState(false);
+    currentCalculation = null;
 }
 
 function fcCombinations() {
+    if (calculationInProgress) {
+        terminateCalculation();
+        setTimeout(() => {
+            startNewCalculation();
+        }, 100);
+    } else {
+        startNewCalculation();
+    }
+}
+
+function startNewCalculation() {
     setLoadingState(false);
     batchResults = [];
     calculationStats = {
@@ -531,60 +566,51 @@ function fcCombinations() {
     };
     const combinationstext = document.getElementById("fcCombinationsText");
     combinationstext.innerHTML = '';
-    
     const progressBar = document.getElementById("fcProgressBar");
     progressBar.style.width = '0%';
     updateStats();
+
     setTimeout(() => {
         if (!validateInputs()) return;
-        
+
         calculationStartTime = Date.now();
         setLoadingState(true);
-    if (!validateInputs()) return;
 
-    calculationStartTime = Date.now();
-    setLoadingState(true);
+        const altFloats = document.getElementById("fcAltInput").value;
 
-    const progressBar = document.getElementById("fcProgressBar");  
-    const fcTotalCombosText = document.getElementById("fcTotalCombosText");  
-    progressBar.style.width = '0%';
+        let originalFloatList = [];
+        let floatList = [];
+        let materialTypeList = [];
 
-    const altFloats = document.getElementById("fcAltInput").value;
+        if (altFloats && altFloats.trim() !== '') {
+            altFloats.split(',').forEach(item => {
+                const parts = item.trim().split('|');
+                const current = parseFloat(parts[0]);
+                const materialType = parts[1] ? parseInt(parts[1]) : 1;
 
-    let originalFloatList = [];
-    let floatList = [];
-    let materialTypeList = [];
+                if (!isNaN(current) && current % 1 !== 0) {
+                    originalFloatList.push(current);
+                    floatList.push(normalizeMaterialWear(current, materialType));
+                    materialTypeList.push(materialType);
+                }
+            });
+        } else {
+            showMessage('请先在数据处理框中输入材料数据！', 'error');
+            setLoadingState(false);
+            return;
+        }
 
-    if (altFloats && altFloats.trim() !== '') {
-        altFloats.split(',').forEach(item => {
-            const parts = item.trim().split('|');
-            const current = parseFloat(parts[0]);
-            const materialType = parts[1] ? parseInt(parts[1]) : 1;
+        if (floatList.length >= MATERIAL_COUNT) {
+            const totalCombos = Utils.combinations(floatList.length, MATERIAL_COUNT);
+            document.getElementById("fcTotalCombosText").textContent = `可能有这么多结果: ${totalCombos} (实际材料数: ${floatList.length})`;
 
-            if (!isNaN(current) && current % 1 !== 0) {
-                originalFloatList.push(current);
-                floatList.push(normalizeMaterialWear(current, materialType));
-                materialTypeList.push(materialType);
-            }
-        });
-    } else {
-        showMessage('请先在数据处理框中输入材料数据！', 'error');
-        setLoadingState(false);
-        return;
-    }
-
-    if (floatList.length >= MATERIAL_COUNT) {
-        const totalCombos = Utils.combinations(floatList.length, MATERIAL_COUNT);
-        fcTotalCombosText.textContent = `可能有这么多结果: ${totalCombos} (实际材料数: ${floatList.length})`;
-
-        fcGetCombinations(floatList, originalFloatList, materialTypeList);
-    } else {
-        showMessage(`最少需要输入${MATERIAL_COUNT}个材料，或者哪里搞错咯?`, 'error');
-        setLoadingState(false);
-    }
- }, 0);
+            fcGetCombinations(floatList, originalFloatList, materialTypeList);
+        } else {
+            showMessage(`最少需要输入${MATERIAL_COUNT}个材料，或者哪里搞错咯?`, 'error');
+            setLoadingState(false);
+        }
+    }, 0);
 }
-
 function fcUpdateCombinations() {
     const totalcombostext = document.getElementById("fcTotalCombosText");
     const altFloats = document.getElementById("fcAltInput").value;
@@ -719,8 +745,178 @@ var countDecimals = function (value) {
     return value.toString().split(".")[1].length || 0;
 }
 
+
+function terminateCalculation() {
+    if (calculationInProgress) {
+        calculationTerminated = true;
+        showMessage('计算已终止', 'info');
+
+        const stopButton = document.getElementById('stopButton');
+        if (stopButton) {
+            stopButton.disabled = true;
+            stopButton.textContent = '正在终止...';
+        }
+    }
+}
+
+function setLoadingState(loading) {
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach(btn => {
+        if (!btn.classList.contains('tabButton')) {
+            if (btn.id === 'stopButton') {
+                btn.disabled = !loading;
+            } else {
+                btn.disabled = loading;
+            }
+        }
+    });
+
+    const stopButton = document.getElementById('stopButton');
+    if (stopButton) {
+        stopButton.disabled = !loading;
+        stopButton.textContent = '终止计算';
+        if (loading) {
+            stopButton.classList.remove('secondary');
+            stopButton.classList.add('danger');
+        } else {
+            stopButton.classList.remove('danger');
+            stopButton.classList.add('secondary');
+        }
+    }
+
+    if (loading) {
+        document.body.classList.add('loading');
+        calculationInProgress = true;
+        calculationTerminated = false;
+    } else {
+        document.body.classList.remove('loading');
+        calculationInProgress = false;
+    }
+}
+function initSimpleCalculation() {
+    updateSimpleMaterialInputs();
+}
+function validateNumber(input) {
+    const cursorPosition = input.selectionStart;
+    let newValue = input.value.replace(/[^0-9.]/g, '');
+    const parts = newValue.split('.');
+    if (parts.length > 2) {
+        newValue = parts[0] + '.' + parts.slice(1).join('');
+    }
+
+    input.value = newValue;
+    input.setSelectionRange(cursorPosition, cursorPosition);
+}
+function updateSimpleMaterialInputs() {
+    const countSelect = document.getElementById('simpleMaterialCount');
+    const tableBody = document.getElementById('materialTableBody');
+
+    simpleMaterialCount = parseInt(countSelect.value);
+    tableBody.innerHTML = '';
+
+    for (let i = 1; i <= simpleMaterialCount; i++) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${i}</td>
+            <td><input type="text" id="materialWear${i}" placeholder="0.00" oninput="validateNumber(this)"></td>
+            <td><input type="text" id="materialMin${i}" placeholder="0.00" oninput="validateNumber(this)"></td>
+            <td><input type="text" id="materialMax${i}" placeholder="1.00" oninput="validateNumber(this)"></td>
+        `;
+        tableBody.appendChild(row);
+    }
+}
+
+function clearSimpleInputs() {
+    for (let i = 1; i <= simpleMaterialCount; i++) {
+        document.getElementById(`materialWear${i}`).value = '';
+        document.getElementById(`materialMin${i}`).value = '';
+        document.getElementById(`materialMax${i}`).value = '';
+    }
+
+    document.getElementById('targetProductMin').value = '';
+    document.getElementById('targetProductMax').value = '';
+
+    document.getElementById('resultWear').textContent = '等待计算...';
+    document.getElementById('resultWear').className = 'result-value';
+
+    showMessage('输入已清除', 'info');
+}
+
+function calculateSimpleWear() {
+    const materials = [];
+    let allInputsValid = true;
+
+    for (let i = 1; i <= simpleMaterialCount; i++) {
+        const wearInput = document.getElementById(`materialWear${i}`).value;
+        const minInput = document.getElementById(`materialMin${i}`).value;
+        const maxInput = document.getElementById(`materialMax${i}`).value;
+        if (!wearInput.trim()) {
+            showMessage(`材料 ${i} 的磨损值不能为空`, 'error');
+            allInputsValid = false;
+            break;
+        }
+
+        const wear = parseFloat(wearInput);
+        const min = minInput.trim() ? parseFloat(minInput) : 0.00;
+        const max = maxInput.trim() ? parseFloat(maxInput) : 1.00;
+
+        if (isNaN(wear)) {
+            showMessage(`材料 ${i} 的磨损值格式错误`, 'error');
+            allInputsValid = false;
+            break;
+        }
+
+        if (min >= max) {
+            showMessage(`材料 ${i} 的Min必须小于Max`, 'error');
+            allInputsValid = false;
+            break;
+        }
+
+        if (wear < min || wear > max) {
+            showMessage(`材料 ${i} 的磨损值不在有效范围内`, 'error');
+            allInputsValid = false;
+            break;
+        }
+
+        materials.push({ wear, min, max });
+    }
+
+    if (!allInputsValid) return;
+
+    const targetMinInput = document.getElementById('targetProductMin').value;
+    const targetMaxInput = document.getElementById('targetProductMax').value;
+
+    const targetMin = targetMinInput.trim() ? parseFloat(targetMinInput) : 0.00;
+    const targetMax = targetMaxInput.trim() ? parseFloat(targetMaxInput) : 1.00;
+
+    if (targetMin >= targetMax) {
+        showMessage('目标产物Min必须小于Max', 'error');
+        return;
+    }
+
+    let totalNormalized = 0;
+
+    for (let i = 0; i < materials.length; i++) {
+        const material = materials[i];
+        const normalized = Utils.getIEEE754((material.wear - material.min) / (material.max - material.min));
+        totalNormalized = Utils.getIEEE754(totalNormalized + normalized);
+    }
+
+    const avgNormalized = Utils.getIEEE754(totalNormalized / Utils.getIEEE754(simpleMaterialCount));
+
+    const finalWear = Utils.getIEEE754(targetMin + Utils.getIEEE754(avgNormalized * Utils.getIEEE754(targetMax - targetMin)));
+
+    const resultWear = document.getElementById('resultWear');
+    resultWear.textContent = finalWear.toFixed(16);
+    resultWear.className = 'result-value';
+
+    showMessage(`计算完成`, 'success');
+}
+
+
 document.addEventListener('DOMContentLoaded', function () {
     initMaterialTypes();
+    initSimpleCalculation();
     const materialCountSelect = document.getElementById('materialCountSelect');
     if (materialCountSelect) {
         MATERIAL_COUNT = parseInt(materialCountSelect.value);
@@ -732,4 +928,9 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log("页面加载，材料种类数量设置为:", MATERIAL_TYPE_COUNT);
     }
     fcUpdateCombinations();
+
+    const stopButton = document.getElementById('stopButton');
+    if (stopButton) {
+        stopButton.disabled = true;
+    }
 });
