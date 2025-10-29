@@ -586,7 +586,8 @@ button:disabled {
 }
 
 .loading {
-    opacity: 0.85;
+    opacity: 0.7;
+    pointer-events: none;
 }
 
 .author-info-card,
@@ -620,87 +621,4 @@ button:disabled {
     .social-card {
         min-width: 100%;
     }
-}
-
-.table-container {
-    background: var(--card-bg);
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
-    overflow: hidden;
-    margin-bottom: 25px;
-}
-
-.material-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-}
-
-.material-table th {
-    background: var(--primary-color);
-    color: white;
-    padding: 12px 8px;
-    text-align: center;
-    font-weight: 600;
-    border: none;
-}
-
-.material-table td {
-    padding: 10px 8px;
-    text-align: center;
-    border-bottom: 1px solid var(--border-color);
-    background: var(--card-bg);
-}
-
-.material-table tbody tr:hover {
-    background: #f8f9fa;
-}
-
-.material-table input {
-    width: 100%;
-    padding: 8px 10px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    font-size: 14px;
-    text-align: center;
-    background: white;
-}
-
-.material-table input:focus {
-    border-color: var(--primary-color);
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
-}
-
-.material-table td:nth-child(2) input {
-    text-align: center;
-    font-family: 'Courier New', monospace;
-}
-
-.material-table td:nth-child(3) input,
-.material-table td:nth-child(4) input {
-    max-width: 80px;
-    margin: 0 auto;
-}
-
-.material-table input::placeholder {
-    color: #999;
-    opacity: 1;
-}
-
-.material-table input:focus::placeholder {
-    color: #ccc;
-}
-
-.result-value {
-    font-size: 16px;
-    font-weight: bold;
-    color: var(--primary-color);
-    word-break: break-all;
-    font-family: 'Courier New', monospace;
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 6px;
-    border: 1px solid #e9ecef;
-    text-align: center;
 }
