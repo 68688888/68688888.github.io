@@ -704,3 +704,46 @@ button:disabled {
     border: 1px solid #e9ecef;
     text-align: center;
 }
+#autoMaterialTableBody td:nth-child(3) {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.auto-material-input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 14px;
+    text-align: center;
+    background: white;
+    transition: all 0.3s ease;
+}
+
+.auto-material-input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+}
+
+.auto-calculation-note {
+    background: #e7f3ff;
+    border: 1px solid #b3d9ff;
+    border-radius: 6px;
+    padding: 15px;
+    margin: 15px 0;
+    font-size: 14px;
+    color: #0066cc;
+}
+.calculated-value {
+    background-color: #f8f9fa !important;
+    color: #6c757d !important;
+    font-style: italic !important;
+}
+
+
+input:not(.calculated-value) {
+    background-color: white !important;
+    color: #333 !important;
+    font-style: normal !important;
+}

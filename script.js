@@ -14,6 +14,7 @@ let calculationInProgress = false;
 let calculationTerminated = false;
 let currentCalculation = null;
 let simpleMaterialCount = 5;
+let autoMaterialCount = 5;
 const DEFAULT_VALUES = {
     MIN_WEAR: '0.00',
     MAX_WEAR: '0.80',
@@ -40,6 +41,15 @@ const Utils = {
     }
 };
 
+let wearGradeRanges = {
+    factory_new: { min: 0, max: 0.07, target: 0.07 },
+    minimal_wear: { min: 0.07, max: 0.15, target: 0.15 },
+    field_tested: { min: 0.15, max: 0.38, target: 0.38 },
+    well_worn: { min: 0.38, max: 0.45, target: 0.45 },
+    battle_scarred: { min: 0.45, max: 1, target: 1 }
+};
+
+
 function showMessage(message, type = 'info') {
     const toast = document.getElementById('messageToast');
     toast.textContent = message;
@@ -56,172 +66,62 @@ function setLoadingState(loading) {
     const buttons = document.querySelectorAll('button');
     buttons.forEach(btn => {
         if (!btn.classList.contains('tabButton')) {
-            btn.disabled = loading;
+            if (btn.id === 'stopButton') {
+                btn.disabled = !loading;
+            } else {
+                btn.disabled = loading;
+            }
         }
     });
+
+    const stopButton = document.getElementById('stopButton');
+    if (stopButton) {
+        stopButton.disabled = !loading;
+        stopButton.textContent = '终止计算';
+        if (loading) {
+            stopButton.classList.remove('secondary');
+            stopButton.classList.add('danger');
+        } else {
+            stopButton.classList.remove('danger');
+            stopButton.classList.add('secondary');
+        }
+    }
 
     if (loading) {
         document.body.classList.add('loading');
+        calculationInProgress = true;
+        calculationTerminated = false;
     } else {
         document.body.classList.remove('loading');
+        calculationInProgress = false;
     }
 }
 
-function updateStats() {
-    document.getElementById('totalCombinations').textContent = calculationStats.total.toLocaleString();
-    document.getElementById('processedCombinations').textContent = calculationStats.processed.toLocaleString();
-    document.getElementById('foundResults').textContent = calculationStats.found.toLocaleString();
-
-    if (calculationStartTime > 0) {
-        const elapsed = Math.round((Date.now() - calculationStartTime) / 1000);
-        document.getElementById('timeElapsed').textContent = `${elapsed}s`;
-    }
-}
-
-function initSearch() {
-    const searchContainer = document.createElement('div');
-    searchContainer.className = 'search-container';
-    searchContainer.style.cssText = `
-                margin: 15px 0;
-                padding: 15px;
-                background: #f8f9fa;
-                border-radius: 8px;
-                border: 1px solid #dee2e6;
-            `;
-
-    searchContainer.innerHTML = `
-                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                    <input type="text" id="searchInput" placeholder="在结果中搜索..." 
-                           style="flex: 1; min-width: 200px; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px;">
-                    <button onclick="performSearch()" class="primary" style="padding: 8px 16px;">搜索</button>
-                    <button onclick="prevSearch()" class="secondary" style="padding: 8px 12px;">上一个</button>
-                    <button onclick="nextSearch()" class="secondary" style="padding: 8px 12px;">下一个</button>
-                    <span id="searchStatus" style="color: #666; font-size: 14px;">未搜索</span>
-                </div>
-            `;
-
-    const combinationsText = document.getElementById("fcCombinationsText");
-    combinationsText.parentNode.insertBefore(searchContainer, combinationsText);
-    document.getElementById('searchInput').addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') {
-            performSearch();
-        }
-    });
-}
-
-function performSearch() {
-    const searchInput = document.getElementById('searchInput');
-    searchTerm = searchInput.value.trim();
-
-    if (!searchTerm) {
-        showMessage('请输入搜索内容', 'error');
-        document.querySelectorAll('.search-highlight').forEach(el => {
-            el.classList.remove('search-highlight');
-        });
-        document.getElementById('searchStatus').textContent = '未搜索';
-        return;
+function validateNumber(input) {
+    const cursorPosition = input.selectionStart;
+    let newValue = input.value.replace(/[^0-9.]/g, '');
+    const parts = newValue.split('.');
+    if (parts.length > 2) {
+        newValue = parts[0] + '.' + parts.slice(1).join('');
     }
 
-    const results = document.querySelectorAll('.real-time-result');
-    searchResults = [];
+    input.value = newValue;
+    input.setSelectionRange(cursorPosition, cursorPosition);
+}
 
-    results.forEach((result, index) => {
-        if (result.textContent.toLowerCase().includes(searchTerm.toLowerCase())) {
-            searchResults.push(index);
-        }
-    });
-
-    const searchStatus = document.getElementById('searchStatus');
-    if (searchResults.length === 0) {
-        searchStatus.textContent = `未找到包含 "${searchTerm}" 的结果`;
-        searchStatus.style.color = '#dc3545';
-        currentSearchIndex = -1;
-        document.querySelectorAll('.search-highlight').forEach(el => {
-            el.classList.remove('search-highlight');
-        });
-    } else {
-        searchStatus.textContent = `找到 ${searchResults.length} 个结果`;
-        searchStatus.style.color = '#28a745';
-        currentSearchIndex = 0;
-        highlightCurrentSearch();
+function openTab(tabName) {
+    var i, tabcontent, tabbutton;
+    tabcontent = document.getElementsByClassName("tabcontent");
+    tabbutton = document.getElementsByClassName("tabButton");
+    for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+        tabbutton[i].classList.remove('active');
     }
+    document.getElementById(tabName).style.display = "block";
+    event.currentTarget.classList.add('active');
 }
 
-function prevSearch() {
-    if (searchResults.length === 0) return;
-
-    currentSearchIndex = (currentSearchIndex - 1 + searchResults.length) % searchResults.length;
-    highlightCurrentSearch();
-}
-
-function nextSearch() {
-    if (searchResults.length === 0) return;
-
-    currentSearchIndex = (currentSearchIndex + 1) % searchResults.length;
-    highlightCurrentSearch();
-}
-
-function highlightCurrentSearch() {
-    document.querySelectorAll('.search-highlight').forEach(el => {
-        el.classList.remove('search-highlight');
-    });
-
-    if (currentSearchIndex >= 0 && currentSearchIndex < searchResults.length) {
-        const results = document.querySelectorAll('.real-time-result');
-        const currentResult = results[searchResults[currentSearchIndex]];
-
-        currentResult.classList.add('search-highlight');
-
-        currentResult.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-        document.getElementById('searchStatus').textContent =
-            `找到 ${searchResults.length} 个结果 (${currentSearchIndex + 1}/${searchResults.length})`;
-    }
-}
-
-let batchResults = [];
-const BATCH_SIZE = 1000;
-
-function addToBatch(wear, materialsText, isExactMatch) {
-    const wearClass = isExactMatch ? 'exact-match-highlight' : 'normal-wear';
-
-    batchResults.push(`
-        <div class="real-time-result">
-            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
-                <div style="flex-shrink: 0;">
-                    <strong>磨损:</strong> <span class="${wearClass}">${wear}</span>
-                </div>
-                <div style="flex: 1; min-width: 200px;">
-                    <strong>组合:</strong> ${materialsText}
-                </div>
-            </div>
-        </div>
-    `);
-
-    if (batchResults.length >= BATCH_SIZE) {
-        flushBatch();
-    }
-}
-
-function flushBatch() {
-    if (batchResults.length === 0) return;
-
-    const combinationstext = document.getElementById("fcCombinationsText");
-
-    const fragment = document.createDocumentFragment();
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = batchResults.join('');
-
-    while (tempDiv.firstChild) {
-        fragment.appendChild(tempDiv.firstChild);
-    }
-
-    combinationstext.appendChild(fragment);
-    combinationstext.scrollTop = combinationstext.scrollHeight;
-
-    batchResults = [];
-}
-
+// ===== 特殊磨损计算功能 =====
 function initMaterialTypes() {
     for (let i = 1; i <= 5; i++) {
         if (!materialData[i]) {
@@ -270,7 +170,6 @@ function restoreMaterialData(index) {
 
 function updateMaterialCount() {
     MATERIAL_COUNT = parseInt(document.getElementById('materialCountSelect').value);
-    console.log("材料数量已更新为:", MATERIAL_COUNT);
     fcUpdateCombinations();
 }
 
@@ -297,32 +196,32 @@ function createMaterialTypeContainer(index) {
     container.className = 'material-type-container';
     container.id = `materialType${index}`;
     container.innerHTML = `
-                <div class="material-type-header">
-                    <div class="material-type-color material-type-${index}"></div>
-                    <h4>材料种类 ${index}</h4>
-                </div>
-                <textarea id="fcAltInput${index}" class="material-type-textarea" placeholder="输入材料种类 ${index} 的磨损数据..."></textarea>
-                <div class="material-type-buttons">
-                    <button class="primary" onclick="extractAndShowFloats(${index})">提取数据</button>
-                </div>
-                <textarea id="fcOutput${index}" class="material-type-output" readonly placeholder="提取的材料数据将显示在这里"></textarea>
-                <textarea id="fcCumulative${index}" class="material-type-output" readonly placeholder="累计的材料数据将显示在这里"></textarea>
-                <div class="material-type-buttons">
-                    <button class="secondary" onclick="copyResults(${index})">复制数据</button>
-                    <button class="primary" onclick="mergeToTotalInput(${index})">汇总数据</button>
-                    <button class="secondary" onclick="clearMaterialType(${index})">清除数据</button>
-                </div>
-                <div class="material-wear-range">
-                    <div>
-                        <h4>材料最小磨损</h4>
-                        <input id="materialMinWear${index}" value="${DEFAULT_VALUES.MIN_WEAR}" placeholder="最小磨损" />
-                    </div>
-                    <div>
-                        <h4>材料最大磨损</h4>
-                        <input id="materialMaxWear${index}" value="${DEFAULT_VALUES.MAX_WEAR}" placeholder="最大磨损" />
-                    </div>
-                </div>
-            `;
+        <div class="material-type-header">
+            <div class="material-type-color material-type-${index}"></div>
+            <h4>材料种类 ${index}</h4>
+        </div>
+        <textarea id="fcAltInput${index}" class="material-type-textarea" placeholder="输入材料种类 ${index} 的磨损数据..."></textarea>
+        <div class="material-type-buttons">
+            <button class="primary" onclick="extractAndShowFloats(${index})">提取数据</button>
+        </div>
+        <textarea id="fcOutput${index}" class="material-type-output" readonly placeholder="提取的材料数据将显示在这里"></textarea>
+        <textarea id="fcCumulative${index}" class="material-type-output" readonly placeholder="累计的材料数据将显示在这里"></textarea>
+        <div class="material-type-buttons">
+            <button class="secondary" onclick="copyResults(${index})">复制数据</button>
+            <button class="primary" onclick="mergeToTotalInput(${index})">汇总数据</button>
+            <button class="secondary" onclick="clearMaterialType(${index})">清除数据</button>
+        </div>
+        <div class="material-wear-range">
+            <div>
+                <h4>材料最小磨损</h4>
+                <input id="materialMinWear${index}" value="${DEFAULT_VALUES.MIN_WEAR}" placeholder="最小磨损" />
+            </div>
+            <div>
+                <h4>材料最大磨损</h4>
+                <input id="materialMaxWear${index}" value="${DEFAULT_VALUES.MAX_WEAR}" placeholder="最大磨损" />
+            </div>
+        </div>
+    `;
     containers.appendChild(container);
     restoreMaterialData(index);
 }
@@ -397,6 +296,7 @@ function validateInputs() {
 
     return true;
 }
+
 async function fcGetCombinations(arr, originalArr, materialTypes) {
     batchResults = [];
     calculationTerminated = false;
@@ -437,7 +337,6 @@ async function fcGetCombinations(arr, originalArr, materialTypes) {
     const updateFrequency = MATERIAL_COUNT === 10 ? 1000000 : 50000;
 
     while (!done && !calculationTerminated) {
-        // 每次循环开始检查是否终止
         if (calculationTerminated) {
             break;
         }
@@ -611,6 +510,7 @@ function startNewCalculation() {
         }
     }, 0);
 }
+
 function fcUpdateCombinations() {
     const totalcombostext = document.getElementById("fcTotalCombosText");
     const altFloats = document.getElementById("fcAltInput").value;
@@ -701,36 +601,71 @@ function clearAllMaterialTypes() {
     showMessage('所有材料数据已清除', 'info');
 }
 
-function updateIeeeRange() {
-    const desiredFloat = Number(document.getElementById("desiredIEEEInput").value);
-    const desiredIEEE = Utils.getIEEE754(desiredFloat);
-    document.getElementById("floatIEEEInput").value = desiredIEEE;
+let batchResults = [];
+const BATCH_SIZE = 1000;
 
-    let minIEEE = desiredIEEE;
-    while (Utils.getIEEE754(minIEEE - 0.0000000000001) === desiredIEEE) {
-        minIEEE -= 0.0000000000001;
+function addToBatch(wear, materialsText, isExactMatch) {
+    const wearClass = isExactMatch ? 'exact-match-highlight' : 'normal-wear';
+
+    batchResults.push(`
+        <div class="real-time-result">
+            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                <div style="flex-shrink: 0;">
+                    <strong>磨损:</strong> <span class="${wearClass}">${wear}</span>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <strong>组合:</strong> ${materialsText}
+                </div>
+            </div>
+        </div>
+    `);
+
+    if (batchResults.length >= BATCH_SIZE) {
+        flushBatch();
     }
-    document.getElementById("minIEEEinput").value = minIEEE;
-
-    let maxIEEE = desiredIEEE;
-    while (Utils.getIEEE754(maxIEEE + 0.0000000000001) === desiredIEEE) {
-        maxIEEE += 0.0000000000001;
-    }
-    document.getElementById("maxIEEEinput").value = maxIEEE;
-
-    document.getElementById("middleIEEEinput").value = (minIEEE + maxIEEE) / 2;
 }
 
-function openTab(tabName) {
-    var i, tabcontent, tabbutton;
-    tabcontent = document.getElementsByClassName("tabcontent");
-    tabbutton = document.getElementsByClassName("tabButton");
-    for (i = 0; i < tabcontent.length; i++) {
-        tabcontent[i].style.display = "none";
-        tabbutton[i].classList.remove('active');
+function flushBatch() {
+    if (batchResults.length === 0) return;
+
+    const combinationstext = document.getElementById("fcCombinationsText");
+
+    const fragment = document.createDocumentFragment();
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = batchResults.join('');
+
+    while (tempDiv.firstChild) {
+        fragment.appendChild(tempDiv.firstChild);
     }
-    document.getElementById(tabName).style.display = "block";
-    event.currentTarget.classList.add('active');
+
+    combinationstext.appendChild(fragment);
+    combinationstext.scrollTop = combinationstext.scrollHeight;
+
+    batchResults = [];
+}
+
+function updateStats() {
+    document.getElementById('totalCombinations').textContent = calculationStats.total.toLocaleString();
+    document.getElementById('processedCombinations').textContent = calculationStats.processed.toLocaleString();
+    document.getElementById('foundResults').textContent = calculationStats.found.toLocaleString();
+
+    if (calculationStartTime > 0) {
+        const elapsed = Math.round((Date.now() - calculationStartTime) / 1000);
+        document.getElementById('timeElapsed').textContent = `${elapsed}s`;
+    }
+}
+
+function terminateCalculation() {
+    if (calculationInProgress) {
+        calculationTerminated = true;
+        showMessage('计算已终止', 'info');
+
+        const stopButton = document.getElementById('stopButton');
+        if (stopButton) {
+            stopButton.disabled = true;
+            stopButton.textContent = '正在终止...';
+        }
+    }
 }
 
 truncateDecimals = function (number, digits) {
@@ -746,67 +681,10 @@ var countDecimals = function (value) {
 }
 
 
-function terminateCalculation() {
-    if (calculationInProgress) {
-        calculationTerminated = true;
-        showMessage('计算已终止', 'info');
-
-        const stopButton = document.getElementById('stopButton');
-        if (stopButton) {
-            stopButton.disabled = true;
-            stopButton.textContent = '正在终止...';
-        }
-    }
-}
-
-function setLoadingState(loading) {
-    const buttons = document.querySelectorAll('button');
-    buttons.forEach(btn => {
-        if (!btn.classList.contains('tabButton')) {
-            if (btn.id === 'stopButton') {
-                btn.disabled = !loading;
-            } else {
-                btn.disabled = loading;
-            }
-        }
-    });
-
-    const stopButton = document.getElementById('stopButton');
-    if (stopButton) {
-        stopButton.disabled = !loading;
-        stopButton.textContent = '终止计算';
-        if (loading) {
-            stopButton.classList.remove('secondary');
-            stopButton.classList.add('danger');
-        } else {
-            stopButton.classList.remove('danger');
-            stopButton.classList.add('secondary');
-        }
-    }
-
-    if (loading) {
-        document.body.classList.add('loading');
-        calculationInProgress = true;
-        calculationTerminated = false;
-    } else {
-        document.body.classList.remove('loading');
-        calculationInProgress = false;
-    }
-}
 function initSimpleCalculation() {
     updateSimpleMaterialInputs();
 }
-function validateNumber(input) {
-    const cursorPosition = input.selectionStart;
-    let newValue = input.value.replace(/[^0-9.]/g, '');
-    const parts = newValue.split('.');
-    if (parts.length > 2) {
-        newValue = parts[0] + '.' + parts.slice(1).join('');
-    }
 
-    input.value = newValue;
-    input.setSelectionRange(cursorPosition, cursorPosition);
-}
 function updateSimpleMaterialInputs() {
     const countSelect = document.getElementById('simpleMaterialCount');
     const tableBody = document.getElementById('materialTableBody');
@@ -903,7 +781,6 @@ function calculateSimpleWear() {
     }
 
     const avgNormalized = Utils.getIEEE754(totalNormalized / Utils.getIEEE754(simpleMaterialCount));
-
     const finalWear = Utils.getIEEE754(targetMin + Utils.getIEEE754(avgNormalized * Utils.getIEEE754(targetMax - targetMin)));
 
     const resultWear = document.getElementById('resultWear');
@@ -912,20 +789,433 @@ function calculateSimpleWear() {
 
     showMessage(`计算完成`, 'success');
 }
+function initAutoCalculation() {
+    updateAutoMaterialInputs();
+    // 设置默认的目标产物范围，避免无法计算
+    setTimeout(() => {
+        const targetMinInput = document.getElementById('autoTargetMin');
+        const targetMaxInput = document.getElementById('autoTargetMax');
+        const targetWearInput = document.getElementById('autoTargetWear');
+        
+        // 设置合理的默认值
+        if (targetMinInput && !targetMinInput.value) {
+            targetMinInput.value = "0.00";
+        }
+        if (targetMaxInput && !targetMaxInput.value) {
+            targetMaxInput.value = "0.07";
+        }
+        if (targetWearInput && !targetWearInput.value) {
+            targetWearInput.value = "0.07";
+        }
+        
+        // 初始化计算
+        recalculateAll();
+    }, 100);
+}
 
+function updateAutoMaterialInputs() {
+    const countSelect = document.getElementById('autoMaterialCount');
+    const tableBody = document.getElementById('autoMaterialTableBody');
+    
+    autoMaterialCount = parseInt(countSelect.value);
+    tableBody.innerHTML = '';
+    
+    for (let i = 1; i <= autoMaterialCount; i++) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${i}</td>
+            <td>
+                <input type="text" id="autoMaterialWear${i}" placeholder="输入磨损值" 
+                       oninput="handleMaterialInput(${i}, this)"
+                       onfocus="handleMaterialFocus(${i}, this)"
+                       onblur="handleMaterialBlur(${i}, this)">
+            </td>
+            <td>
+                <input type="text" id="autoMaterialMin${i}" value="0.00" placeholder="0.00" 
+                       oninput="validateNumber(this); recalculateAll();">
+            </td>
+            <td>
+                <input type="text" id="autoMaterialMax${i}" value="1.00" placeholder="1.00" 
+                       oninput="validateNumber(this); recalculateAll();">
+            </td>
+        `;
+        tableBody.appendChild(row);
+    }
+    
+    recalculateAll();
+}
+
+function updateTargetWearRange() {
+    const gradeSelect = document.getElementById('targetWearGrade');
+    const targetWearInput = document.getElementById('autoTargetWear');
+    const selectedGrade = gradeSelect.value;
+    
+    if (selectedGrade !== 'custom') {
+        const range = wearGradeRanges[selectedGrade];
+        targetWearInput.value = range.target;
+        targetWearInput.disabled = true;
+        targetWearInput.style.backgroundColor = '#f8f9fa';
+        targetWearInput.removeEventListener('input', handleTargetWearInput);
+    } else {
+        targetWearInput.disabled = false;
+        targetWearInput.style.backgroundColor = '';
+        targetWearInput.addEventListener('input', handleTargetWearInput);
+    }
+    
+    recalculateAll();
+}
+function handleTargetWearInput() {
+    validateNumber(this);
+    recalculateAll();
+}
+
+function handleMaterialInput(index, inputElement) {
+    validateNumber(inputElement);
+    
+    if (inputElement.value.trim()) {
+        inputElement.classList.remove('calculated-value');
+        inputElement.style.color = '';
+        inputElement.style.fontStyle = '';
+    }
+    
+    recalculateAll();
+}
+
+function handleMaterialFocus(index, inputElement) {
+    if (inputElement.classList.contains('calculated-value')) {
+        inputElement.value = '';
+        inputElement.classList.remove('calculated-value');
+        inputElement.style.color = '';
+        inputElement.style.fontStyle = '';
+    }
+}
+
+function handleMaterialBlur(index, inputElement) {
+    if (!inputElement.value.trim()) {
+        recalculateAll();
+    }
+}
+
+function recalculateAll() {
+    const targetMin = parseFloat(document.getElementById('autoTargetMin').value) || 0;
+    const targetMax = parseFloat(document.getElementById('autoTargetMax').value) || 0.07;
+    const targetWear = parseFloat(document.getElementById('autoTargetWear').value) || 0.07;
+    
+    // 验证目标设置
+    if (targetMin >= targetMax || targetWear < targetMin || targetWear > targetMax) {
+        showAllAsUncalculable();
+        return;
+    }
+    
+    const userMaterials = [];
+    const emptyIndices = [];
+    
+    for (let i = 1; i <= autoMaterialCount; i++) {
+        const inputElement = document.getElementById(`autoMaterialWear${i}`);
+        const materialMin = parseFloat(document.getElementById(`autoMaterialMin${i}`).value || '0.00');
+        const materialMax = parseFloat(document.getElementById(`autoMaterialMax${i}`).value || '1.00');
+        
+        if (materialMin >= materialMax) {
+            continue;
+        }
+        
+        // 检查是否是有效的用户输入
+        if (inputElement.value.trim() && 
+            !inputElement.classList.contains('calculated-value') &&
+            inputElement.value !== "无法计算" && 
+            inputElement.value !== "超出范围") {
+            const wear = parseFloat(inputElement.value);
+            if (!isNaN(wear) && wear >= materialMin && wear <= materialMax) {
+                userMaterials.push({
+                    index: i,
+                    wear: wear,
+                    min: materialMin,
+                    max: materialMax
+                });
+            }
+        } else if (!inputElement.value.trim() || 
+                   inputElement.classList.contains('calculated-value') ||
+                   inputElement.value === "无法计算" || 
+                   inputElement.value === "超出范围") {
+            emptyIndices.push(i);
+        }
+    }
+    
+    // 如果没有用户输入，显示为空
+    if (userMaterials.length === 0) {
+        showAllAsUncalculable();
+        return;
+    }
+    
+    if (emptyIndices.length > 0) {
+        calculateRemainingValues(userMaterials, emptyIndices, targetMin, targetMax, targetWear);
+    } else {
+        calculateFinalResult(userMaterials, targetMin, targetMax);
+    }
+}
+
+function calculateRemainingValues(userMaterials, emptyIndices, targetMin, targetMax, targetWear) {
+    let inputNormalizedSum = 0;
+    for (const material of userMaterials) {
+        const normalized = Utils.getIEEE754((material.wear - material.min) / (material.max - material.min));
+        inputNormalizedSum = Utils.getIEEE754(inputNormalizedSum + normalized);
+    }
+    
+    const targetNormalized = Utils.getIEEE754((targetWear - targetMin) / (targetMax - targetMin));
+    const totalNeededNormalized = Utils.getIEEE754(targetNormalized * autoMaterialCount);
+    const remainingNormalizedSum = Utils.getIEEE754(totalNeededNormalized - inputNormalizedSum);
+    
+    if (remainingNormalizedSum < 0 || remainingNormalizedSum > emptyIndices.length) {
+        for (const index of emptyIndices) {
+            const inputElement = document.getElementById(`autoMaterialWear${index}`);
+            if (inputElement.classList.contains('calculated-value') || !inputElement.value.trim()) {
+                inputElement.value = "无法计算";
+                inputElement.classList.add('calculated-value');
+                inputElement.style.color = '#dc3545';
+                inputElement.style.fontStyle = 'italic';
+            }
+        }
+        return;
+    }
+    
+    const normalizedPerMaterial = Utils.getIEEE754(remainingNormalizedSum / emptyIndices.length);
+    
+    for (const index of emptyIndices) {
+        const inputElement = document.getElementById(`autoMaterialWear${index}`);
+        const materialMin = parseFloat(document.getElementById(`autoMaterialMin${index}`).value || '0.00');
+        const materialMax = parseFloat(document.getElementById(`autoMaterialMax${index}`).value || '1.00');
+        
+        const recommendedWear = Utils.getIEEE754(materialMin + Utils.getIEEE754(normalizedPerMaterial * (materialMax - materialMin)));
+        inputElement.classList.add('calculated-value');
+        inputElement.style.fontStyle = 'italic';
+        
+        if (recommendedWear >= materialMin && recommendedWear <= materialMax) {
+            inputElement.value = recommendedWear.toFixed(16);
+            inputElement.style.color = '#6c757d';
+        } else {
+            inputElement.value = "超出范围";
+            inputElement.style.color = '#dc3545';
+        }
+    }
+}
+
+function calculateFinalResult(userMaterials, targetMin, targetMax) {
+    let totalNormalized = 0;
+    
+    for (const material of userMaterials) {
+        const normalized = Utils.getIEEE754((material.wear - material.min) / (material.max - material.min));
+        totalNormalized = Utils.getIEEE754(totalNormalized + normalized);
+    }
+    
+    const avgNormalized = Utils.getIEEE754(totalNormalized / autoMaterialCount);
+    const finalWear = Utils.getIEEE754(targetMin + Utils.getIEEE754(avgNormalized * Utils.getIEEE754(targetMax - targetMin)));
+    
+    const lastIndex = autoMaterialCount;
+    const inputElement = document.getElementById(`autoMaterialWear${lastIndex}`);
+    inputElement.value = finalWear.toFixed(16);
+    inputElement.classList.add('calculated-value');
+    inputElement.style.color = '#28a745';
+    inputElement.style.fontStyle = 'italic';
+}
+
+function showAllAsUncalculable() {
+    let hasUserInput = false;
+    
+    // 检查是否有用户输入
+    for (let i = 1; i <= autoMaterialCount; i++) {
+        const inputElement = document.getElementById(`autoMaterialWear${i}`);
+        if (inputElement.value.trim() && !inputElement.classList.contains('calculated-value')) {
+            hasUserInput = true;
+            break;
+        }
+    }
+    
+    // 如果没有用户输入，显示为空而不是"无法计算"
+    if (!hasUserInput) {
+        for (let i = 1; i <= autoMaterialCount; i++) {
+            const inputElement = document.getElementById(`autoMaterialWear${i}`);
+            if (inputElement.classList.contains('calculated-value') || inputElement.value === "无法计算" || inputElement.value === "超出范围") {
+                inputElement.value = "";
+                inputElement.classList.remove('calculated-value');
+                inputElement.style.color = '';
+                inputElement.style.fontStyle = '';
+            }
+        }
+    } else {
+        // 有用户输入但无法计算，才显示红字
+        for (let i = 1; i <= autoMaterialCount; i++) {
+            const inputElement = document.getElementById(`autoMaterialWear${i}`);
+            if (inputElement.classList.contains('calculated-value') || !inputElement.value.trim()) {
+                inputElement.value = "无法计算";
+                inputElement.classList.add('calculated-value');
+                inputElement.style.color = '#dc3545';
+                inputElement.style.fontStyle = 'italic';
+            }
+        }
+    }
+}
+
+function updateIeeeRange() {
+    const desiredFloat = Number(document.getElementById("desiredIEEEInput").value);
+    const desiredIEEE = Utils.getIEEE754(desiredFloat);
+    document.getElementById("floatIEEEInput").value = desiredIEEE;
+
+    let minIEEE = desiredIEEE;
+    while (Utils.getIEEE754(minIEEE - 0.0000000000001) === desiredIEEE) {
+        minIEEE -= 0.0000000000001;
+    }
+    document.getElementById("minIEEEinput").value = minIEEE;
+
+    let maxIEEE = desiredIEEE;
+    while (Utils.getIEEE754(maxIEEE + 0.0000000000001) === desiredIEEE) {
+        maxIEEE += 0.0000000000001;
+    }
+    document.getElementById("maxIEEEinput").value = maxIEEE;
+
+    document.getElementById("middleIEEEinput").value = (minIEEE + maxIEEE) / 2;
+}
+
+function initSearch() {
+    const searchContainer = document.createElement('div');
+    searchContainer.className = 'search-container';
+    searchContainer.style.cssText = `
+        margin: 15px 0;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+    `;
+
+    searchContainer.innerHTML = `
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <input type="text" id="searchInput" placeholder="在结果中搜索..." 
+                   style="flex: 1; min-width: 200px; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px;">
+            <button onclick="performSearch()" class="primary" style="padding: 8px 16px;">搜索</button>
+            <button onclick="prevSearch()" class="secondary" style="padding: 8px 12px;">上一个</button>
+            <button onclick="nextSearch()" class="secondary" style="padding: 8px 12px;">下一个</button>
+            <span id="searchStatus" style="color: #666; font-size: 14px;">未搜索</span>
+        </div>
+    `;
+
+    const combinationsText = document.getElementById("fcCombinationsText");
+    combinationsText.parentNode.insertBefore(searchContainer, combinationsText);
+    document.getElementById('searchInput').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            performSearch();
+        }
+    });
+}
+
+function performSearch() {
+    const searchInput = document.getElementById('searchInput');
+    searchTerm = searchInput.value.trim();
+
+    if (!searchTerm) {
+        showMessage('请输入搜索内容', 'error');
+        document.querySelectorAll('.search-highlight').forEach(el => {
+            el.classList.remove('search-highlight');
+        });
+        document.getElementById('searchStatus').textContent = '未搜索';
+        return;
+    }
+
+    const results = document.querySelectorAll('.real-time-result');
+    searchResults = [];
+
+    results.forEach((result, index) => {
+        if (result.textContent.toLowerCase().includes(searchTerm.toLowerCase())) {
+            searchResults.push(index);
+        }
+    });
+
+    const searchStatus = document.getElementById('searchStatus');
+    if (searchResults.length === 0) {
+        searchStatus.textContent = `未找到包含 "${searchTerm}" 的结果`;
+        searchStatus.style.color = '#dc3545';
+        currentSearchIndex = -1;
+        document.querySelectorAll('.search-highlight').forEach(el => {
+            el.classList.remove('search-highlight');
+        });
+    } else {
+        searchStatus.textContent = `找到 ${searchResults.length} 个结果`;
+        searchStatus.style.color = '#28a745';
+        currentSearchIndex = 0;
+        highlightCurrentSearch();
+    }
+}
+
+function prevSearch() {
+    if (searchResults.length === 0) return;
+
+    currentSearchIndex = (currentSearchIndex - 1 + searchResults.length) % searchResults.length;
+    highlightCurrentSearch();
+}
+
+function nextSearch() {
+    if (searchResults.length === 0) return;
+
+    currentSearchIndex = (currentSearchIndex + 1) % searchResults.length;
+    highlightCurrentSearch();
+}
+
+function highlightCurrentSearch() {
+    document.querySelectorAll('.search-highlight').forEach(el => {
+        el.classList.remove('search-highlight');
+    });
+
+    if (currentSearchIndex >= 0 && currentSearchIndex < searchResults.length) {
+        const results = document.querySelectorAll('.real-time-result');
+        const currentResult = results[searchResults[currentSearchIndex]];
+
+        currentResult.classList.add('search-highlight');
+        currentResult.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        document.getElementById('searchStatus').textContent =
+            `找到 ${searchResults.length} 个结果 (${currentSearchIndex + 1}/${searchResults.length})`;
+    }
+}
 
 document.addEventListener('DOMContentLoaded', function () {
     initMaterialTypes();
     initSimpleCalculation();
+    initAutoCalculation();
+    setTimeout(() => {
+        const targetWearInput = document.getElementById('autoTargetWear');
+        const gradeSelect = document.getElementById('targetWearGrade');
+        const targetMinInput = document.getElementById('autoTargetMin');
+        const targetMaxInput = document.getElementById('autoTargetMax');
+        if (targetMinInput) {
+            targetMinInput.addEventListener('input', function() {
+                validateNumber(this);
+                recalculateAll();
+            });
+        }
+        if (targetMaxInput) {
+            targetMaxInput.addEventListener('input', function() {
+                validateNumber(this);
+                recalculateAll();
+            });
+        }
+        
+        if (targetWearInput && gradeSelect) {
+            if (gradeSelect.value !== 'custom') {
+                targetWearInput.disabled = true;
+                targetWearInput.style.backgroundColor = '#f8f9fa';
+            } else {
+                targetWearInput.disabled = false;
+                targetWearInput.style.backgroundColor = '';
+                targetWearInput.addEventListener('input', handleTargetWearInput);
+            }
+        }
+    }, 100);
+    
     const materialCountSelect = document.getElementById('materialCountSelect');
     if (materialCountSelect) {
         MATERIAL_COUNT = parseInt(materialCountSelect.value);
-        console.log("页面加载，材料数量设置为:", MATERIAL_COUNT);
     }
     const materialTypeCountSelect = document.getElementById('materialTypeCountSelect');
     if (materialTypeCountSelect) {
         MATERIAL_TYPE_COUNT = parseInt(materialTypeCountSelect.value);
-        console.log("页面加载，材料种类数量设置为:", MATERIAL_TYPE_COUNT);
     }
     fcUpdateCombinations();
 

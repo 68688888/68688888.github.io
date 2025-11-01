@@ -14,11 +14,12 @@
         <div class="tab">
             <button class="tabButton active" onclick="openTab('floatCombosDiv')">特殊磨损计算</button>
             <button class="tabButton" onclick="openTab('wearCalculationDiv')">简易计算</button>
+            <button class="tabButton" onclick="openTab('autoCalculationDiv')">自动配材</button>
             <button class="tabButton" onclick="openTab('ieee754Div')">IEEE754转换</button>
             <button class="tabButton" onclick="openTab('aboutAuthorDiv')">盘尼西林</button>
         </div>
 
-        <div id="floatCombosDiv" class="tabcontent active">
+        <div id="floatCombosDiv" class="tabcontent active" style="display: block;">
             <h3 class="section-title">材料配置</h3>
 
             <div class="selector-group">
@@ -124,7 +125,8 @@
 
             <div class="action-buttons">
                 <button class="primary" onclick="fcCombinations()">开始计算</button>
-                <button class="danger" id="stopButton" onclick="terminateCalculation()" disabled>终止计算</button>
+                <button class="danger" id="stopButton" onclick="terminateCalculation()"
+                    disabled="disabled">终止计算</button>
             </div>
 
             <div class="result-info" id="fcTotalCombosText">等待计算...</div>
@@ -148,7 +150,7 @@
 
             <div id="fcCombinationsText"></div>
         </div>
-        <div id="wearCalculationDiv" class="tabcontent">
+        <div id="wearCalculationDiv" class="tabcontent" style="display: none;">
             <h3 class="section-title">简易磨损计算</h3>
 
             <div class="selector-group">
@@ -173,6 +175,51 @@
                         </tr>
                     </thead>
                     <tbody id="materialTableBody">
+                        <tr>
+                            <td>1</td>
+                            <td><input type="text" id="materialWear1" placeholder="0.00" oninput="validateNumber(this)"
+                                    value="0.08199702203273773"></td>
+                            <td><input type="text" id="materialMin1" placeholder="0.00" oninput="validateNumber(this)">
+                            </td>
+                            <td><input type="text" id="materialMax1" placeholder="1.00" oninput="validateNumber(this)"
+                                    value="0.65"></td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td><input type="text" id="materialWear2" placeholder="0.00" oninput="validateNumber(this)"
+                                    value="0.0830011591315269"></td>
+                            <td><input type="text" id="materialMin2" placeholder="0.00" oninput="validateNumber(this)">
+                            </td>
+                            <td><input type="text" id="materialMax2" placeholder="1.00" oninput="validateNumber(this)"
+                                    value="0.65"></td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td><input type="text" id="materialWear3" placeholder="0.00" oninput="validateNumber(this)"
+                                    value="0.07096707820892334"></td>
+                            <td><input type="text" id="materialMin3" placeholder="0.00" oninput="validateNumber(this)">
+                            </td>
+                            <td><input type="text" id="materialMax3" placeholder="1.00" oninput="validateNumber(this)"
+                                    value="0.65"></td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td><input type="text" id="materialWear4" placeholder="0.00" oninput="validateNumber(this)"
+                                    value="0.07435792684555054"></td>
+                            <td><input type="text" id="materialMin4" placeholder="0.00" oninput="validateNumber(this)">
+                            </td>
+                            <td><input type="text" id="materialMax4" placeholder="1.00" oninput="validateNumber(this)"
+                                    value="0.65"></td>
+                        </tr>
+                        <tr>
+                            <td>5</td>
+                            <td><input type="text" id="materialWear5" placeholder="0.00" oninput="validateNumber(this)"
+                                    value="0.0849"></td>
+                            <td><input type="text" id="materialMin5" placeholder="0.00" oninput="validateNumber(this)">
+                            </td>
+                            <td><input type="text" id="materialMax5" placeholder="1.00" oninput="validateNumber(this)"
+                                    value="0.65"></td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -181,11 +228,13 @@
             <div class="criteria-container">
                 <div class="criteria-item">
                     <h4>目标产物Min</h4>
-                    <input type="text" id="targetProductMin" placeholder="0.00" oninput="validateNumber(this)">
+                    <input type="text" id="targetProductMin" placeholder="0.00" oninput="validateNumber(this)"
+                        value="0.06">
                 </div>
                 <div class="criteria-item">
                     <h4>目标产物Max</h4>
-                    <input type="text" id="targetProductMax" placeholder="1.00" oninput="validateNumber(this)">
+                    <input type="text" id="targetProductMax" placeholder="1.00" oninput="validateNumber(this)"
+                        value="0.8">
                 </div>
             </div>
 
@@ -202,38 +251,102 @@
                 </div>
             </div>
         </div>
-        <div id="ieee754Div" class="tabcontent">
+        <div id="autoCalculationDiv" class="tabcontent" style="display: none;">
+            <h3 class="section-title">自动配材</h3>
+
+            <div class="selector-group">
+                <div class="selector-container">
+                    <h4>选择材料数量</h4>
+                    <select id="autoMaterialCount" onchange="updateAutoMaterialInputs()">
+                        <option value="5" selected="selected">5个材料</option>
+                        <option value="10">10个材料</option>
+                    </select>
+                </div>
+                <div class="selector-container">
+                    <h4>目标磨损等级</h4>
+                    <select id="targetWearGrade" onchange="updateTargetWearRange()">
+                        <option value="factory_new">崭新出厂 (0-0.07)</option>
+                        <option value="minimal_wear">略有磨损 (0.07-0.15)</option>
+                        <option value="field_tested">久经沙场 (0.15-0.38)</option>
+                        <option value="well_worn">破损不堪 (0.38-0.45)</option>
+                        <option value="battle_scarred">战痕累累 (0.45-1)</option>
+                        <option value="custom">自定义</option>
+                    </select>
+                </div>
+            </div>
+
+            <h3 class="section-title">目标产物设置</h3>
+            <div class="criteria-container">
+                <div class="criteria-item">
+                    <h4>目标产物Min</h4>
+                    <input type="text" id="autoTargetMin" value="0.00" placeholder="最小磨损"
+                        oninput="validateNumber(this); calculateAutoWear();">
+                </div>
+                <div class="criteria-item">
+                    <h4>目标产物Max</h4>
+                    <input type="text" id="autoTargetMax" value="0.07" placeholder="最大磨损"
+                        oninput="validateNumber(this); calculateAutoWear();">
+                </div>
+                <div class="criteria-item">
+                    <h4>目标磨损值</h4>
+                    <input type="text" id="autoTargetWear" value="0.07" placeholder="目标磨损"
+                        oninput="validateNumber(this); calculateAutoWear();">
+                </div>
+            </div>
+
+            <h3 class="section-title">材料列表</h3>
+            <div class="table-container">
+                <table class="material-table">
+                    <thead>
+                        <tr>
+                            <th width="60">序号</th>
+                            <th width="150">磨损值</th>
+                            <th width="100">Min</th>
+                            <th width="100">Max</th>
+                        </tr>
+                    </thead>
+                    <tbody id="autoMaterialTableBody">
+                        <!-- 动态生成 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="ieee754Div" class="tabcontent" style="display: none;">
             <h3 class="section-title">IEEE754 浮点数转换</h3>
             <div class="criteria-container">
                 <div class="criteria-item">
                     <h4>目标磨损值</h4>
-                    <input id="desiredIEEEInput" placeholder="0.5" onkeyup="updateIeeeRange()">
+                    <input id="desiredIEEEInput" placeholder="0.5" onkeyup="updateIeeeRange()" >
                 </div>
                 <div class="criteria-item">
                     <h4>IEEE754 表示</h4>
-                    <input id="floatIEEEInput" placeholder="0.5" readonly="readonly">
+                    <input id="floatIEEEInput" placeholder="0.5" readonly="readonly" value="0.5">
                 </div>
             </div>
 
             <div class="criteria-container">
                 <div class="criteria-item">
                     <h4>最小边界值</h4>
-                    <input id="minIEEEinput" placeholder="0.49999998509883925" readonly="readonly">
+                    <input id="minIEEEinput" placeholder="0.49999998509883925" readonly="readonly"
+                        value="0.49999998509883925">
                 </div>
                 <div class="criteria-item">
                     <h4>最大边界值</h4>
-                    <input id="maxIEEEinput" placeholder="0.500000029802264" readonly="readonly">
+                    <input id="maxIEEEinput" placeholder="0.500000029802264" readonly="readonly"
+                        value="0.500000029802264">
                 </div>
                 <div class="criteria-item">
                     <h4>中间值</h4>
-                    <input id="middleIEEEinput" placeholder="0.5000000074505516" readonly="readonly">
+                    <input id="middleIEEEinput" placeholder="0.5000000074505516" readonly="readonly"
+                        value="0.5000000074505516">
                 </div>
             </div>
         </div>
 
-        <div id="messageToast" class="message-toast"></div>
+        <div id="messageToast" class="message-toast success">计算完成</div>
 
-        <div id="aboutAuthorDiv" class="tabcontent">
+        <div id="aboutAuthorDiv" class="tabcontent" style="display: none;">
             <h3 class="section-title">盘尼西林</h3>
 
             <div class="author-container"
@@ -332,7 +445,10 @@
     <script src="script.js"></script>
 
 
-</body>
 
+
+
+
+</body>
 
 </html>
