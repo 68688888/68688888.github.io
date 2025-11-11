@@ -811,7 +811,6 @@
             font-style: normal !important;
         }
 
-        /* 加载动画样式 */
         #loading {
             position: fixed;
             top: 0;
@@ -852,7 +851,6 @@
 </head>
 
 <body>
-    <!-- 加载动画 -->
     <div id="loading">
         <div>
             <div class="spinner"></div>
@@ -1068,11 +1066,21 @@
                         </tr>
                         <tr>
                             <td>5</td>
-                            <td><input type="text" id="materialWear5" placeholder="0.00" oninput="validateNumber(this)">
+                            <td>
+                                <input type="text" id="autoMaterialWear5" class="calculated-value" readonly
+                                    style="background-color: #f8f9fa; cursor: not-allowed;">
                             </td>
-                            <td><input type="text" id="materialMin5" placeholder="0.00" oninput="validateNumber(this)">
+                            <td>
+                                <input type="text" id="autoMaterialMin5" value="0.00" placeholder="0.00"
+                                    oninput="validateNumber(this); recalculateAll();">
                             </td>
-                            <td><input type="text" id="materialMax5" placeholder="1.00" oninput="validateNumber(this)">
+                            <td>
+                                <input type="text" id="autoMaterialMax5" value="1.00" placeholder="1.00"
+                                    oninput="validateNumber(this); recalculateAll();">
+                            </td>
+                            <td>
+                                <button class="primary" onclick="copyAutoMaterialWear(5)"
+                                    style="padding: 6px 12px; font-size: 12px;">复制</button>
                             </td>
                         </tr>
                     </tbody>
@@ -1135,18 +1143,18 @@
                 <div class="criteria-item">
                     <h4>目标产物Min</h4>
                     <input type="text" id="autoTargetMin" value="0.00" placeholder="最小磨损"
-                        oninput="validateNumber(this); calculateAutoWear();">
+                        oninput="validateNumber(this); recalculateAll();">
                 </div>
                 <div class="criteria-item">
                     <h4>目标产物Max</h4>
                     <input type="text" id="autoTargetMax" value="0.07" placeholder="最大磨损"
-                        oninput="validateNumber(this); calculateAutoWear();">
+                        oninput="validateNumber(this); recalculateAll();">
                 </div>
                 <div class="criteria-item">
                     <h4>目标磨损值</h4>
                     <input type="text" id="autoTargetWear" value="0.07" placeholder="目标磨损"
-                        oninput="validateNumber(this); calculateAutoWear();" disabled="disabled"
-                        style="background-color: rgb(248, 249, 250);">
+                        oninput="validateNumber(this); recalculateAll();" disabled="disabled"
+                        style="background-color: #f8f9fa;">
                 </div>
             </div>
 
@@ -1156,9 +1164,10 @@
                     <thead>
                         <tr>
                             <th width="60">序号</th>
-                            <th width="150">磨损值</th>
+                            <th width="200">磨损值</th>
                             <th width="100">Min</th>
                             <th width="100">Max</th>
+                            <th width="80">操作</th>
                         </tr>
                     </thead>
                     <tbody id="autoMaterialTableBody">
@@ -1167,79 +1176,86 @@
                             <td>
                                 <input type="text" id="autoMaterialWear1" placeholder="输入磨损值"
                                     oninput="handleMaterialInput(1, this)" onfocus="handleMaterialFocus(1, this)"
-                                    onblur="handleMaterialBlur(1, this)">
+                                    onblur="handleMaterialBlur(1, this)" style="text-align: center;">
                             </td>
                             <td>
                                 <input type="text" id="autoMaterialMin1" value="0.00" placeholder="0.00"
-                                    oninput="validateNumber(this); recalculateAll();">
+                                    oninput="validateNumber(this); recalculateAll();" style="text-align: center;">
                             </td>
                             <td>
                                 <input type="text" id="autoMaterialMax1" value="1.00" placeholder="1.00"
-                                    oninput="validateNumber(this); recalculateAll();">
+                                    oninput="validateNumber(this); recalculateAll();" style="text-align: center;">
                             </td>
+                            <td style="text-align: center;">-</td>
                         </tr>
                         <tr>
                             <td>2</td>
                             <td>
                                 <input type="text" id="autoMaterialWear2" placeholder="输入磨损值"
                                     oninput="handleMaterialInput(2, this)" onfocus="handleMaterialFocus(2, this)"
-                                    onblur="handleMaterialBlur(2, this)">
+                                    onblur="handleMaterialBlur(2, this)" style="text-align: center;">
                             </td>
                             <td>
                                 <input type="text" id="autoMaterialMin2" value="0.00" placeholder="0.00"
-                                    oninput="validateNumber(this); recalculateAll();">
+                                    oninput="validateNumber(this); recalculateAll();" style="text-align: center;">
                             </td>
                             <td>
                                 <input type="text" id="autoMaterialMax2" value="1.00" placeholder="1.00"
-                                    oninput="validateNumber(this); recalculateAll();">
+                                    oninput="validateNumber(this); recalculateAll();" style="text-align: center;">
                             </td>
+                            <td style="text-align: center;">-</td>
                         </tr>
                         <tr>
                             <td>3</td>
                             <td>
                                 <input type="text" id="autoMaterialWear3" placeholder="输入磨损值"
                                     oninput="handleMaterialInput(3, this)" onfocus="handleMaterialFocus(3, this)"
-                                    onblur="handleMaterialBlur(3, this)">
+                                    onblur="handleMaterialBlur(3, this)" style="text-align: center;">
                             </td>
                             <td>
                                 <input type="text" id="autoMaterialMin3" value="0.00" placeholder="0.00"
-                                    oninput="validateNumber(this); recalculateAll();">
+                                    oninput="validateNumber(this); recalculateAll();" style="text-align: center;">
                             </td>
                             <td>
                                 <input type="text" id="autoMaterialMax3" value="1.00" placeholder="1.00"
-                                    oninput="validateNumber(this); recalculateAll();">
+                                    oninput="validateNumber(this); recalculateAll();" style="text-align: center;">
                             </td>
+                            <td style="text-align: center;">-</td>
                         </tr>
                         <tr>
                             <td>4</td>
                             <td>
                                 <input type="text" id="autoMaterialWear4" placeholder="输入磨损值"
                                     oninput="handleMaterialInput(4, this)" onfocus="handleMaterialFocus(4, this)"
-                                    onblur="handleMaterialBlur(4, this)">
+                                    onblur="handleMaterialBlur(4, this)" style="text-align: center;">
                             </td>
                             <td>
                                 <input type="text" id="autoMaterialMin4" value="0.00" placeholder="0.00"
-                                    oninput="validateNumber(this); recalculateAll();">
+                                    oninput="validateNumber(this); recalculateAll();" style="text-align: center;">
                             </td>
                             <td>
                                 <input type="text" id="autoMaterialMax4" value="1.00" placeholder="1.00"
-                                    oninput="validateNumber(this); recalculateAll();">
+                                    oninput="validateNumber(this); recalculateAll();" style="text-align: center;">
                             </td>
+                            <td style="text-align: center;">-</td>
                         </tr>
                         <tr>
                             <td>5</td>
                             <td>
-                                <input type="text" id="autoMaterialWear5" placeholder="输入磨损值"
-                                    oninput="handleMaterialInput(5, this)" onfocus="handleMaterialFocus(5, this)"
-                                    onblur="handleMaterialBlur(5, this)">
+                                <input type="text" id="autoMaterialWear5" class="calculated-value" readonly
+                                    style="background-color: #f8f9fa; cursor: not-allowed; text-align: center; color: #28a745; font-weight: bold;">
                             </td>
                             <td>
                                 <input type="text" id="autoMaterialMin5" value="0.00" placeholder="0.00"
-                                    oninput="validateNumber(this); recalculateAll();">
+                                    oninput="validateNumber(this); recalculateAll();" style="text-align: center;">
                             </td>
                             <td>
                                 <input type="text" id="autoMaterialMax5" value="1.00" placeholder="1.00"
-                                    oninput="validateNumber(this); recalculateAll();">
+                                    oninput="validateNumber(this); recalculateAll();" style="text-align: center;">
+                            </td>
+                            <td style="text-align: center;">
+                                <button class="primary" onclick="copyAutoMaterialWear(5)"
+                                    style="padding: 6px 12px; font-size: 12px;">复制</button>
                             </td>
                         </tr>
                     </tbody>
@@ -1379,16 +1395,13 @@
 
         <div id="messageToast" class="message-toast">计算完成</div>
 
-        <!-- 内联 JavaScript -->
         <script>
-            // 加载完成后隐藏加载动画
             window.addEventListener('load', function () {
                 setTimeout(() => {
                     document.getElementById('loading').style.display = 'none';
                 }, 500);
             });
 
-            // Service Worker 注册
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function () {
                     navigator.serviceWorker.register('./sw.js')
@@ -1396,6 +1409,7 @@
                         .catch(error => console.log('SW registration failed'));
                 });
             }
+
             let MATERIAL_COUNT = 5;
             let MATERIAL_TYPE_COUNT = 1;
             let materialData = {};
@@ -1446,7 +1460,6 @@
                 well_worn: { min: 0.38, max: 0.45, target: 0.45 },
                 battle_scarred: { min: 0.45, max: 1, target: 1 }
             };
-
 
             function showMessage(message, type = 'info') {
                 const toast = document.getElementById('messageToast');
@@ -1519,7 +1532,6 @@
                 event.currentTarget.classList.add('active');
             }
 
-            // ===== 特殊磨损计算功能 =====
             function initMaterialTypes() {
                 for (let i = 1; i <= 10; i++) {
                     if (!materialData[i]) {
@@ -1594,32 +1606,32 @@
                 container.className = 'material-type-container';
                 container.id = `materialType${index}`;
                 container.innerHTML = `
-        <div class="material-type-header">
-            <div class="material-type-color material-type-${index}"></div>
-            <h4>材料种类 ${index}</h4>
-        </div>
-        <textarea id="fcAltInput${index}" class="material-type-textarea" placeholder="输入材料种类 ${index} 的磨损数据..."></textarea>
-        <div class="material-type-buttons">
-            <button class="primary" onclick="extractAndShowFloats(${index})">提取数据</button>
-        </div>
-        <textarea id="fcOutput${index}" class="material-type-output" readonly placeholder="提取的材料数据将显示在这里"></textarea>
-        <textarea id="fcCumulative${index}" class="material-type-output" readonly placeholder="累计的材料数据将显示在这里"></textarea>
-        <div class="material-type-buttons">
-            <button class="secondary" onclick="copyResults(${index})">复制数据</button>
-            <button class="primary" onclick="mergeToTotalInput(${index})">汇总数据</button>
-            <button class="secondary" onclick="clearMaterialType(${index})">清除数据</button>
-        </div>
-        <div class="material-wear-range">
-            <div>
-                <h4>材料最小磨损</h4>
-                <input id="materialMinWear${index}" value="${DEFAULT_VALUES.MIN_WEAR}" placeholder="最小磨损" />
+            <div class="material-type-header">
+                <div class="material-type-color material-type-${index}"></div>
+                <h4>材料种类 ${index}</h4>
             </div>
-            <div>
-                <h4>材料最大磨损</h4>
-                <input id="materialMaxWear${index}" value="${DEFAULT_VALUES.MAX_WEAR}" placeholder="最大磨损" />
+            <textarea id="fcAltInput${index}" class="material-type-textarea" placeholder="输入材料种类 ${index} 的磨损数据..."></textarea>
+            <div class="material-type-buttons">
+                <button class="primary" onclick="extractAndShowFloats(${index})">提取数据</button>
             </div>
-        </div>
-    `;
+            <textarea id="fcOutput${index}" class="material-type-output" readonly placeholder="提取的材料数据将显示在这里"></textarea>
+            <textarea id="fcCumulative${index}" class="material-type-output" readonly placeholder="累计的材料数据将显示在这里"></textarea>
+            <div class="material-type-buttons">
+                <button class="secondary" onclick="copyResults(${index})">复制数据</button>
+                <button class="primary" onclick="mergeToTotalInput(${index})">汇总数据</button>
+                <button class="secondary" onclick="clearMaterialType(${index})">清除数据</button>
+            </div>
+            <div class="material-wear-range">
+                <div>
+                    <h4>材料最小磨损</h4>
+                    <input id="materialMinWear${index}" value="${DEFAULT_VALUES.MIN_WEAR}" placeholder="最小磨损" />
+                </div>
+                <div>
+                    <h4>材料最大磨损</h4>
+                    <input id="materialMaxWear${index}" value="${DEFAULT_VALUES.MAX_WEAR}" placeholder="最大磨损" />
+                </div>
+            </div>
+        `;
                 containers.appendChild(container);
                 restoreMaterialData(index);
             }
@@ -2006,17 +2018,17 @@
                 const wearClass = isExactMatch ? 'exact-match-highlight' : 'normal-wear';
 
                 batchResults.push(`
-        <div class="real-time-result">
-            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
-                <div style="flex-shrink: 0;">
-                    <strong>磨损:</strong> <span class="${wearClass}">${wear}</span>
-                </div>
-                <div style="flex: 1; min-width: 200px;">
-                    <strong>组合:</strong> ${materialsText}
+            <div class="real-time-result">
+                <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                    <div style="flex-shrink: 0;">
+                        <strong>磨损:</strong> <span class="${wearClass}">${wear}</span>
+                    </div>
+                    <div style="flex: 1; min-width: 200px;">
+                        <strong>组合:</strong> ${materialsText}
+                    </div>
                 </div>
             </div>
-        </div>
-    `);
+        `);
 
                 if (batchResults.length >= BATCH_SIZE) {
                     flushBatch();
@@ -2078,7 +2090,6 @@
                 return value.toString().split(".")[1].length || 0;
             }
 
-
             function initSimpleCalculation() {
                 updateSimpleMaterialInputs();
             }
@@ -2093,11 +2104,11 @@
                 for (let i = 1; i <= simpleMaterialCount; i++) {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-            <td>${i}</td>
-            <td><input type="text" id="materialWear${i}" placeholder="0.00" oninput="validateNumber(this)"></td>
-            <td><input type="text" id="materialMin${i}" placeholder="0.00" oninput="validateNumber(this)"></td>
-            <td><input type="text" id="materialMax${i}" placeholder="1.00" oninput="validateNumber(this)"></td>
-        `;
+                <td>${i}</td>
+                <td><input type="text" id="materialWear${i}" placeholder="0.00" oninput="validateNumber(this)"></td>
+                <td><input type="text" id="materialMin${i}" placeholder="0.00" oninput="validateNumber(this)"></td>
+                <td><input type="text" id="materialMax${i}" placeholder="1.00" oninput="validateNumber(this)"></td>
+            `;
                     tableBody.appendChild(row);
                 }
             }
@@ -2187,15 +2198,14 @@
 
                 showMessage(`计算完成`, 'success');
             }
+
             function initAutoCalculation() {
                 updateAutoMaterialInputs();
-                // 设置默认的目标产物范围，避免无法计算
                 setTimeout(() => {
                     const targetMinInput = document.getElementById('autoTargetMin');
                     const targetMaxInput = document.getElementById('autoTargetMax');
                     const targetWearInput = document.getElementById('autoTargetWear');
 
-                    // 设置合理的默认值
                     if (targetMinInput && !targetMinInput.value) {
                         targetMinInput.value = "0.00";
                     }
@@ -2206,9 +2216,17 @@
                         targetWearInput.value = "0.07";
                     }
 
-                    // 初始化计算
                     recalculateAll();
                 }, 100);
+            }
+
+            function copyAutoMaterialWear(index) {
+                const wearInput = document.getElementById(`autoMaterialWear${index}`);
+                if (wearInput && wearInput.value) {
+                    wearInput.select();
+                    document.execCommand('copy');
+                    showMessage(`材料 ${index} 的磨损值已复制`, 'success');
+                }
             }
 
             function updateAutoMaterialInputs() {
@@ -2220,23 +2238,47 @@
 
                 for (let i = 1; i <= autoMaterialCount; i++) {
                     const row = document.createElement('tr');
-                    row.innerHTML = `
-            <td>${i}</td>
-            <td>
-                <input type="text" id="autoMaterialWear${i}" placeholder="输入磨损值" 
-                       oninput="handleMaterialInput(${i}, this)"
-                       onfocus="handleMaterialFocus(${i}, this)"
-                       onblur="handleMaterialBlur(${i}, this)">
-            </td>
-            <td>
-                <input type="text" id="autoMaterialMin${i}" value="0.00" placeholder="0.00" 
-                       oninput="validateNumber(this); recalculateAll();">
-            </td>
-            <td>
-                <input type="text" id="autoMaterialMax${i}" value="1.00" placeholder="1.00" 
-                       oninput="validateNumber(this); recalculateAll();">
-            </td>
-        `;
+
+                    if (i === autoMaterialCount) {
+                        row.innerHTML = `
+                <td>${i}</td>
+                <td>
+                    <input type="text" id="autoMaterialWear${i}" class="calculated-value" 
+                           readonly style="background-color: #f8f9fa; cursor: not-allowed; text-align: center; color: #28a745; font-weight: bold;">
+                </td>
+                <td>
+                    <input type="text" id="autoMaterialMin${i}" placeholder="0.00" 
+                           oninput="validateNumber(this); recalculateAll();" style="text-align: center;">
+                </td>
+                <td>
+                    <input type="text" id="autoMaterialMax${i}" placeholder="1.00" 
+                           oninput="validateNumber(this); recalculateAll();" style="text-align: center;">
+                </td>
+                <td style="text-align: center;">
+                    <button class="primary" onclick="copyAutoMaterialWear(${i})" 
+                            style="padding: 6px 12px; font-size: 12px;">复制</button>
+                </td>
+            `;
+                    } else {
+                        row.innerHTML = `
+                <td>${i}</td>
+                <td>
+                    <input type="text" id="autoMaterialWear${i}" placeholder="输入磨损值" 
+                           oninput="handleMaterialInput(${i}, this)"
+                           onfocus="handleMaterialFocus(${i}, this)"
+                           onblur="handleMaterialBlur(${i}, this)" style="text-align: center;">
+                </td>
+                <td>
+                    <input type="text" id="autoMaterialMin${i}" placeholder="0.00" 
+                           oninput="validateNumber(this); recalculateAll();" style="text-align: center;">
+                </td>
+                <td>
+                    <input type="text" id="autoMaterialMax${i}" placeholder="1.00" 
+                           oninput="validateNumber(this); recalculateAll();" style="text-align: center;">
+                </td>
+                <td style="text-align: center;">-</td>
+            `;
+                    }
                     tableBody.appendChild(row);
                 }
 
@@ -2253,17 +2295,11 @@
                     targetWearInput.value = range.target;
                     targetWearInput.disabled = true;
                     targetWearInput.style.backgroundColor = '#f8f9fa';
-                    targetWearInput.removeEventListener('input', handleTargetWearInput);
                 } else {
                     targetWearInput.disabled = false;
                     targetWearInput.style.backgroundColor = '';
-                    targetWearInput.addEventListener('input', handleTargetWearInput);
                 }
 
-                recalculateAll();
-            }
-            function handleTargetWearInput() {
-                validateNumber(this);
                 recalculateAll();
             }
 
@@ -2299,7 +2335,6 @@
                 const targetMax = parseFloat(document.getElementById('autoTargetMax').value) || 0.07;
                 const targetWear = parseFloat(document.getElementById('autoTargetWear').value) || 0.07;
 
-                // 验证目标设置
                 if (targetMin >= targetMax || targetWear < targetMin || targetWear > targetMax) {
                     showAllAsUncalculable();
                     return;
@@ -2309,15 +2344,19 @@
                 const emptyIndices = [];
 
                 for (let i = 1; i <= autoMaterialCount; i++) {
+                    if (i === autoMaterialCount) {
+                        emptyIndices.push(i);
+                        continue;
+                    }
+
                     const inputElement = document.getElementById(`autoMaterialWear${i}`);
-                    const materialMin = parseFloat(document.getElementById(`autoMaterialMin${i}`).value || '0.00');
-                    const materialMax = parseFloat(document.getElementById(`autoMaterialMax${i}`).value || '1.00');
+                    const materialMin = parseFloat(document.getElementById(`autoMaterialMin${i}`).value) || 0.00;
+                    const materialMax = parseFloat(document.getElementById(`autoMaterialMax${i}`).value) || 1.00;
 
                     if (materialMin >= materialMax) {
                         continue;
                     }
 
-                    // 检查是否是有效的用户输入
                     if (inputElement.value.trim() &&
                         !inputElement.classList.contains('calculated-value') &&
                         inputElement.value !== "无法计算" &&
@@ -2339,20 +2378,15 @@
                     }
                 }
 
-                // 如果没有用户输入，显示为空
                 if (userMaterials.length === 0) {
                     showAllAsUncalculable();
                     return;
                 }
 
-                if (emptyIndices.length > 0) {
-                    calculateRemainingValues(userMaterials, emptyIndices, targetMin, targetMax, targetWear);
-                } else {
-                    calculateFinalResult(userMaterials, targetMin, targetMax);
-                }
+                calculateLastMaterialValue(userMaterials, emptyIndices, targetMin, targetMax, targetWear);
             }
 
-            function calculateRemainingValues(userMaterials, emptyIndices, targetMin, targetMax, targetWear) {
+            function calculateLastMaterialValue(userMaterials, emptyIndices, targetMin, targetMax, targetWear) {
                 let inputNormalizedSum = 0;
                 for (const material of userMaterials) {
                     const normalized = Utils.getIEEE754((material.wear - material.min) / (material.max - material.min));
@@ -2363,63 +2397,47 @@
                 const totalNeededNormalized = Utils.getIEEE754(targetNormalized * autoMaterialCount);
                 const remainingNormalizedSum = Utils.getIEEE754(totalNeededNormalized - inputNormalizedSum);
 
-                if (remainingNormalizedSum < 0 || remainingNormalizedSum > emptyIndices.length) {
-                    for (const index of emptyIndices) {
+                const lastIndex = autoMaterialCount;
+                const otherEmptyIndices = emptyIndices.filter(index => index !== lastIndex);
+
+                if (otherEmptyIndices.length > 0) {
+                    const normalizedPerMaterial = Utils.getIEEE754(remainingNormalizedSum / (otherEmptyIndices.length + 1));
+
+                    for (const index of otherEmptyIndices) {
                         const inputElement = document.getElementById(`autoMaterialWear${index}`);
-                        if (inputElement.classList.contains('calculated-value') || !inputElement.value.trim()) {
-                            inputElement.value = "无法计算";
-                            inputElement.classList.add('calculated-value');
+                        const materialMin = parseFloat(document.getElementById(`autoMaterialMin${index}`).value || '0.00');
+                        const materialMax = parseFloat(document.getElementById(`autoMaterialMax${index}`).value || '1.00');
+
+                        const recommendedWear = Utils.getIEEE754(materialMin + Utils.getIEEE754(normalizedPerMaterial * (materialMax - materialMin)));
+                        inputElement.classList.add('calculated-value');
+                        inputElement.style.fontStyle = 'italic';
+                        inputElement.style.textAlign = 'center';
+
+                        if (recommendedWear >= materialMin && recommendedWear <= materialMax) {
+                            inputElement.value = recommendedWear.toFixed(16);
+                            inputElement.style.color = '#6c757d';
+                        } else {
+                            inputElement.value = "超出范围";
                             inputElement.style.color = '#dc3545';
-                            inputElement.style.fontStyle = 'italic';
                         }
                     }
-                    return;
                 }
 
-                const normalizedPerMaterial = Utils.getIEEE754(remainingNormalizedSum / emptyIndices.length);
+                const lastMaterialInput = document.getElementById(`autoMaterialWear${lastIndex}`);
+                const lastMaterialMin = parseFloat(document.getElementById(`autoMaterialMin${lastIndex}`).value || '0.00');
+                const lastMaterialMax = parseFloat(document.getElementById(`autoMaterialMax${lastIndex}`).value || '1.00');
 
-                for (const index of emptyIndices) {
-                    const inputElement = document.getElementById(`autoMaterialWear${index}`);
-                    const materialMin = parseFloat(document.getElementById(`autoMaterialMin${index}`).value || '0.00');
-                    const materialMax = parseFloat(document.getElementById(`autoMaterialMax${index}`).value || '1.00');
+                const normalizedPerMaterial = Utils.getIEEE754(remainingNormalizedSum / (otherEmptyIndices.length + 1));
+                const lastWear = Utils.getIEEE754(lastMaterialMin + Utils.getIEEE754(normalizedPerMaterial * (lastMaterialMax - lastMaterialMin)));
 
-                    const recommendedWear = Utils.getIEEE754(materialMin + Utils.getIEEE754(normalizedPerMaterial * (materialMax - materialMin)));
-                    inputElement.classList.add('calculated-value');
-                    inputElement.style.fontStyle = 'italic';
-
-                    if (recommendedWear >= materialMin && recommendedWear <= materialMax) {
-                        inputElement.value = recommendedWear.toFixed(16);
-                        inputElement.style.color = '#6c757d';
-                    } else {
-                        inputElement.value = "超出范围";
-                        inputElement.style.color = '#dc3545';
-                    }
-                }
-            }
-
-            function calculateFinalResult(userMaterials, targetMin, targetMax) {
-                let totalNormalized = 0;
-
-                for (const material of userMaterials) {
-                    const normalized = Utils.getIEEE754((material.wear - material.min) / (material.max - material.min));
-                    totalNormalized = Utils.getIEEE754(totalNormalized + normalized);
-                }
-
-                const avgNormalized = Utils.getIEEE754(totalNormalized / autoMaterialCount);
-                const finalWear = Utils.getIEEE754(targetMin + Utils.getIEEE754(avgNormalized * Utils.getIEEE754(targetMax - targetMin)));
-
-                const lastIndex = autoMaterialCount;
-                const inputElement = document.getElementById(`autoMaterialWear${lastIndex}`);
-                inputElement.value = finalWear.toFixed(16);
-                inputElement.classList.add('calculated-value');
-                inputElement.style.color = '#28a745';
-                inputElement.style.fontStyle = 'italic';
+                lastMaterialInput.value = lastWear.toFixed(16);
+                lastMaterialInput.style.color = '#28a745';
+                lastMaterialInput.style.fontWeight = 'bold';
             }
 
             function showAllAsUncalculable() {
                 let hasUserInput = false;
 
-                // 检查是否有用户输入
                 for (let i = 1; i <= autoMaterialCount; i++) {
                     const inputElement = document.getElementById(`autoMaterialWear${i}`);
                     if (inputElement.value.trim() && !inputElement.classList.contains('calculated-value')) {
@@ -2428,7 +2446,6 @@
                     }
                 }
 
-                // 如果没有用户输入，显示为空而不是"无法计算"
                 if (!hasUserInput) {
                     for (let i = 1; i <= autoMaterialCount; i++) {
                         const inputElement = document.getElementById(`autoMaterialWear${i}`);
@@ -2440,7 +2457,6 @@
                         }
                     }
                 } else {
-                    // 有用户输入但无法计算，才显示红字
                     for (let i = 1; i <= autoMaterialCount; i++) {
                         const inputElement = document.getElementById(`autoMaterialWear${i}`);
                         if (inputElement.classList.contains('calculated-value') || !inputElement.value.trim()) {
@@ -2477,23 +2493,23 @@
                 const searchContainer = document.createElement('div');
                 searchContainer.className = 'search-container';
                 searchContainer.style.cssText = `
-        margin: 15px 0;
-        padding: 15px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        border: 1px solid #dee2e6;
-    `;
+            margin: 15px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        `;
 
                 searchContainer.innerHTML = `
-        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-            <input type="text" id="searchInput" placeholder="在结果中搜索..." 
-                   style="flex: 1; min-width: 200px; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px;">
-            <button onclick="performSearch()" class="primary" style="padding: 8px 16px;">搜索</button>
-            <button onclick="prevSearch()" class="secondary" style="padding: 8px 12px;">上一个</button>
-            <button onclick="nextSearch()" class="secondary" style="padding: 8px 12px;">下一个</button>
-            <span id="searchStatus" style="color: #666; font-size: 14px;">未搜索</span>
-        </div>
-    `;
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <input type="text" id="searchInput" placeholder="在结果中搜索..." 
+                       style="flex: 1; min-width: 200px; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px;">
+                <button onclick="performSearch()" class="primary" style="padding: 8px 16px;">搜索</button>
+                <button onclick="prevSearch()" class="secondary" style="padding: 8px 12px;">上一个</button>
+                <button onclick="nextSearch()" class="secondary" style="padding: 8px 12px;">下一个</button>
+                <span id="searchStatus" style="color: #666; font-size: 14px;">未搜索</span>
+            </div>
+        `;
 
                 const combinationsText = document.getElementById("fcCombinationsText");
                 combinationsText.parentNode.insertBefore(searchContainer, combinationsText);
@@ -2602,7 +2618,6 @@
                         } else {
                             targetWearInput.disabled = false;
                             targetWearInput.style.backgroundColor = '';
-                            targetWearInput.addEventListener('input', handleTargetWearInput);
                         }
                     }
                 }, 100);
