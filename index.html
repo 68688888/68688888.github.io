@@ -2629,8 +2629,6 @@
                     valueElement.style.color = '#dc3545';
                     return;
                 }
-
-                // 直接复用第四页的IEEE754转换逻辑
                 const desiredFloat = Number(value);
                 const desiredIEEE = Utils.getIEEE754(desiredFloat);
 
@@ -2671,7 +2669,6 @@
                         }
                     }
                 }, 100);
-                // 如果目标磨损值已经有内容，初始化显示
                 const inputElement = document.getElementById('fcCdesiredfloatinput');
                 if (inputElement && inputElement.value.trim()) {
                     updateTargetWearIEEE();
@@ -2693,5 +2690,6 @@
             });
         </script>
 </body>
+
 
 </html>
