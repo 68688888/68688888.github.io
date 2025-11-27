@@ -1,9 +1,559 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
+
 <head>
-    <meta charset="utf-8">
-    <meta http-equiv="refresh" content="0;url=https://6888.vercel.app/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="public, max-age=86400">
+    <meta http-equiv="Expires" content="86400">
+    <title>西林磨损计算器</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="./favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon">
 </head>
+
 <body>
+    <div class="container">
+        <div class="tab">
+            <button class="tabButton active" onclick="openTab('floatCombosDiv')">特殊磨损计算</button>
+            <button class="tabButton" onclick="openTab('wearCalculationDiv')">简易计算</button>
+            <button class="tabButton" onclick="openTab('autoCalculationDiv')">自动配材</button>
+            <button class="tabButton" onclick="openTab('ieee754Div')">IEEE754转换</button>
+            <button class="tabButton" onclick="openTab('aboutAuthorDiv')">盘尼西林</button>
+        </div>
+
+        <div id="floatCombosDiv" class="tabcontent active" style="display: block;">
+            <h3 class="section-title">材料配置</h3>
+
+            <div class="selector-group">
+                <div class="selector-container">
+                    <h4>选择合成材料数量</h4>
+                    <select id="materialCountSelect" onchange="updateMaterialCount()">
+                        <option value="5" selected="selected">5个材料</option>
+                        <option value="10">10个材料</option>
+                    </select>
+                </div>
+
+                <div class="selector-container">
+                    <h4>选择材料种类数量</h4>
+                    <select id="materialTypeCountSelect" onchange="updateMaterialTypeCount()">
+                        <option value="1" selected="selected">1种材料</option>
+                        <option value="2">2种材料</option>
+                        <option value="3">3种材料</option>
+                        <option value="4">4种材料</option>
+                        <option value="5">5种材料</option>
+                        <option value="6">6种材料</option>
+                        <option value="7">7种材料</option>
+                        <option value="8">8种材料</option>
+                        <option value="9">9种材料</option>
+                        <option value="10">10种材料</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="materialTypeContainers" class="material-types-container">
+                <div class="material-type-container" id="materialType1">
+                    <div class="material-type-header">
+                        <div class="material-type-color material-type-1"></div>
+                        <h4>材料种类 1</h4>
+                    </div>
+                    <textarea id="fcAltInput1" class="material-type-textarea"
+                        placeholder="输入材料种类 1 的磨损数据..."></textarea>
+                    <div class="material-type-buttons">
+                        <button class="primary" onclick="extractAndShowFloats(1)">提取数据</button>
+                    </div>
+                    <textarea id="fcOutput1" class="material-type-output" readonly="readonly"
+                        placeholder="提取的材料数据将显示在这里"></textarea>
+                    <textarea id="fcCumulative1" class="material-type-output" readonly="readonly"
+                        placeholder="累计的材料数据将显示在这里"></textarea>
+                    <div class="material-type-buttons">
+                        <button class="secondary" onclick="copyResults(1)">复制数据</button>
+                        <button class="primary" onclick="mergeToTotalInput(1)">汇总数据</button>
+                        <button class="secondary" onclick="clearMaterialType(1)">清除数据</button>
+                    </div>
+                    <div class="material-wear-range">
+                        <div>
+                            <h4>材料最小磨损</h4>
+                            <input id="materialMinWear1" value="0.00" placeholder="最小磨损">
+                        </div>
+                        <div>
+                            <h4>材料最大磨损</h4>
+                            <input id="materialMaxWear1" value="0.80" placeholder="最大磨损">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="secondary" onclick="clearAllMaterialTypes()">清除所有材料数据</button>
+            </div>
+
+            <h3 class="section-title">数据处理</h3>
+            <textarea id="fcAltInput" onkeyup="fcUpdateCombinations()" rows="4"
+                placeholder="在此输入总的材料数据，或使用上方的汇总功能..."></textarea>
+
+            <h3 class="section-title">计算参数</h3>
+            <div class="criteria-container">
+                <div class="criteria-item">
+                    <h4>成品最大磨损</h4>
+                    <input id="fcCmaxwearinput" placeholder="输入最大磨损">
+                </div>
+                <div class="criteria-item">
+                    <h4>成品最小磨损</h4>
+                    <input id="fcCminwearinput" value="0.00000" placeholder="输入最小磨损">
+                </div>
+                <div class="criteria-item">
+                    <h4>目标磨损值</h4>
+                    <input id="fcCdesiredfloatinput" placeholder="输入目标磨损" oninput="updateTargetWearIEEE()">
+                    <div id="targetWearIEEEDisplay" class="ieee754-display" style="display: none">
+                        IEEE754(实际磨损) :<span id="targetWearIEEEValue" class="ieee754-value"></span>
+                    </div>
+                </div>
+                <div class="criteria-item">
+                    <h4>计算精确度</h4>
+                    <input id="fcCspecificityinput" value="0.00000001" placeholder="输入精确度">
+                </div>
+            </div>
+
+            <div class="stats-container">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalCombinations">0</div>
+                    <div class="stat-label">总组合数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="processedCombinations">0</div>
+                    <div class="stat-label">已处理</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="foundResults">0</div>
+                    <div class="stat-label">找到结果</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="timeElapsed">0s</div>
+                    <div class="stat-label">耗时</div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="primary" onclick="fcCombinations()">开始计算</button>
+                <button class="danger" id="stopButton" onclick="terminateCalculation()"
+                    disabled="disabled">终止计算</button>
+            </div>
+
+            <div class="result-info" id="fcTotalCombosText">等待计算...</div>
+
+            <div id="fcTheProgress">
+                <div id="fcProgressBar"></div>
+            </div>
+
+            <h3 class="section-title">计算结果</h3>
+
+            <div class="search-container">
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <input type="text" id="searchInput" placeholder="在结果中搜索..."
+                        style="flex: 1; min-width: 200px; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px;">
+                    <button onclick="performSearch()" class="primary" style="padding: 8px 16px;">搜索</button>
+                    <button onclick="prevSearch()" class="secondary" style="padding: 8px 12px;">上一个</button>
+                    <button onclick="nextSearch()" class="secondary" style="padding: 8px 12px;">下一个</button>
+                    <span id="searchStatus" style="color: #666; font-size: 14px;">未搜索</span>
+                </div>
+            </div>
+            <div
+                style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 12px; margin: 15px 0; font-size: 13px; color: #856404;">
+                <strong>注意：</strong> 请按照计算出来的顺序（从前往后）放入炉子。如果用BUFF或简易计算验证后发现数值不一样（往往是第七位以后不一样）请不要担心，按计算出来的顺序放不会错。
+            </div>
+            <div id="fcCombinationsText"></div>
+        </div>
+        <div id="wearCalculationDiv" class="tabcontent" style="display: none;">
+            <h3 class="section-title">简易磨损计算</h3>
+
+            <div class="selector-group">
+                <div class="selector-container">
+                    <h4>选择材料数量</h4>
+                    <select id="simpleMaterialCount" onchange="updateSimpleMaterialInputs()">
+                        <option value="5" selected="selected">5个材料</option>
+                        <option value="10">10个材料</option>
+                    </select>
+                </div>
+            </div>
+
+            <h3 class="section-title">材料列表</h3>
+            <div class="table-container">
+                <table class="material-table">
+                    <thead>
+                        <tr>
+                            <th width="60">序号</th>
+                            <th width="200">磨损值</th>
+                            <th width="100">Min</th>
+                            <th width="100">Max</th>
+                        </tr>
+                    </thead>
+                    <tbody id="materialTableBody">
+                        <tr>
+                            <td>1</td>
+                            <td><input type="text" id="materialWear1" placeholder="0.00" oninput="validateNumber(this)">
+                            </td>
+                            <td><input type="text" id="materialMin1" placeholder="0.00" oninput="validateNumber(this)">
+                            </td>
+                            <td><input type="text" id="materialMax1" placeholder="1.00" oninput="validateNumber(this)">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td><input type="text" id="materialWear2" placeholder="0.00" oninput="validateNumber(this)">
+                            </td>
+                            <td><input type="text" id="materialMin2" placeholder="0.00" oninput="validateNumber(this)">
+                            </td>
+                            <td><input type="text" id="materialMax2" placeholder="1.00" oninput="validateNumber(this)">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td><input type="text" id="materialWear3" placeholder="0.00" oninput="validateNumber(this)">
+                            </td>
+                            <td><input type="text" id="materialMin3" placeholder="0.00" oninput="validateNumber(this)">
+                            </td>
+                            <td><input type="text" id="materialMax3" placeholder="1.00" oninput="validateNumber(this)">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td><input type="text" id="materialWear4" placeholder="0.00" oninput="validateNumber(this)">
+                            </td>
+                            <td><input type="text" id="materialMin4" placeholder="0.00" oninput="validateNumber(this)">
+                            </td>
+                            <td><input type="text" id="materialMax4" placeholder="1.00" oninput="validateNumber(this)">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>5</td>
+                            <td>
+                                <input type="text" id="autoMaterialWear5" class="calculated-value" readonly
+                                    style="background-color: #f8f9fa; cursor: not-allowed;">
+                            </td>
+                            <td>
+                                <input type="text" id="autoMaterialMin5" value="0.00" placeholder="0.00"
+                                    oninput="validateNumber(this); recalculateAll();">
+                            </td>
+                            <td>
+                                <input type="text" id="autoMaterialMax5" value="1.00" placeholder="1.00"
+                                    oninput="validateNumber(this); recalculateAll();">
+                            </td>
+                            <td>
+                                <button class="primary" onclick="copyAutoMaterialWear(5)"
+                                    style="padding: 6px 12px; font-size: 12px;">复制</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 class="section-title">目标产物设置</h3>
+            <div class="criteria-container">
+                <div class="criteria-item">
+                    <h4>目标产物Min</h4>
+                    <input type="text" id="targetProductMin" placeholder="0.00" oninput="validateNumber(this)"
+                        value="0.06">
+                </div>
+                <div class="criteria-item">
+                    <h4>目标产物Max</h4>
+                    <input type="text" id="targetProductMax" placeholder="1.00" oninput="validateNumber(this)"
+                        value="0.8">
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="primary" onclick="calculateSimpleWear()">开始计算</button>
+                <button class="secondary" onclick="clearSimpleInputs()">清除输入</button>
+            </div>
+
+            <h3 class="section-title">计算结果</h3>
+            <div class="result-container">
+                <div class="result-item">
+                    <h4>计算出的产物磨损</h4>
+                    <div id="resultWear" class="result-value">等待计算...</div>
+                </div>
+            </div>
+        </div>
+        <div id="autoCalculationDiv" class="tabcontent" style="display: none;">
+            <h3 class="section-title">自动配材</h3>
+
+            <div class="selector-group">
+                <div class="selector-container">
+                    <h4>选择材料数量</h4>
+                    <select id="autoMaterialCount" onchange="updateAutoMaterialInputs()">
+                        <option value="5" selected="selected">5个材料</option>
+                        <option value="10">10个材料</option>
+                    </select>
+                </div>
+                <div class="selector-container">
+                    <h4>目标磨损等级</h4>
+                    <select id="targetWearGrade" onchange="updateTargetWearRange()">
+                        <option value="factory_new" selected="selected">崭新出厂 (0-0.07)</option>
+                        <option value="minimal_wear">略有磨损 (0.07-0.15)</option>
+                        <option value="field_tested">久经沙场 (0.15-0.38)</option>
+                        <option value="well_worn">破损不堪 (0.38-0.45)</option>
+                        <option value="battle_scarred">战痕累累 (0.45-1)</option>
+                        <option value="custom">自定义</option>
+                    </select>
+                </div>
+            </div>
+
+            <h3 class="section-title">目标产物设置</h3>
+            <div class="criteria-container">
+                <div class="criteria-item">
+                    <h4>目标产物Min</h4>
+                    <input type="text" id="autoTargetMin" value="0.00" placeholder="最小磨损"
+                        oninput="validateNumber(this); recalculateAll();">
+                </div>
+                <div class="criteria-item">
+                    <h4>目标产物Max</h4>
+                    <input type="text" id="autoTargetMax" value="0.07" placeholder="最大磨损"
+                        oninput="validateNumber(this); recalculateAll();">
+                </div>
+                <div class="criteria-item">
+                    <h4>目标磨损值</h4>
+                    <input type="text" id="autoTargetWear" value="0.07" placeholder="目标磨损"
+                        oninput="validateNumber(this); recalculateAll();" disabled="disabled"
+                        style="background-color: #f8f9fa;">
+                </div>
+            </div>
+
+            <h3 class="section-title">材料列表</h3>
+            <div class="table-container">
+                <table class="material-table">
+                    <thead>
+                        <tr>
+                            <th width="60">序号</th>
+                            <th width="200">磨损值</th>
+                            <th width="100">Min</th>
+                            <th width="100">Max</th>
+                            <th width="80">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="autoMaterialTableBody">
+                        <tr>
+                            <td>1</td>
+                            <td>
+                                <input type="text" id="autoMaterialWear1" placeholder="输入磨损值"
+                                    oninput="handleMaterialInput(1, this)" onfocus="handleMaterialFocus(1, this)"
+                                    onblur="handleMaterialBlur(1, this)" style="text-align: center;">
+                            </td>
+                            <td>
+                                <input type="text" id="autoMaterialMin1" value="0.00" placeholder="0.00"
+                                    oninput="validateNumber(this); recalculateAll();" style="text-align: center;">
+                            </td>
+                            <td>
+                                <input type="text" id="autoMaterialMax1" value="1.00" placeholder="1.00"
+                                    oninput="validateNumber(this); recalculateAll();" style="text-align: center;">
+                            </td>
+                            <td style="text-align: center;">-</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>
+                                <input type="text" id="autoMaterialWear2" placeholder="输入磨损值"
+                                    oninput="handleMaterialInput(2, this)" onfocus="handleMaterialFocus(2, this)"
+                                    onblur="handleMaterialBlur(2, this)" style="text-align: center;">
+                            </td>
+                            <td>
+                                <input type="text" id="autoMaterialMin2" value="0.00" placeholder="0.00"
+                                    oninput="validateNumber(this); recalculateAll();" style="text-align: center;">
+                            </td>
+                            <td>
+                                <input type="text" id="autoMaterialMax2" value="1.00" placeholder="1.00"
+                                    oninput="validateNumber(this); recalculateAll();" style="text-align: center;">
+                            </td>
+                            <td style="text-align: center;">-</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>
+                                <input type="text" id="autoMaterialWear3" placeholder="输入磨损值"
+                                    oninput="handleMaterialInput(3, this)" onfocus="handleMaterialFocus(3, this)"
+                                    onblur="handleMaterialBlur(3, this)" style="text-align: center;">
+                            </td>
+                            <td>
+                                <input type="text" id="autoMaterialMin3" value="0.00" placeholder="0.00"
+                                    oninput="validateNumber(this); recalculateAll();" style="text-align: center;">
+                            </td>
+                            <td>
+                                <input type="text" id="autoMaterialMax3" value="1.00" placeholder="1.00"
+                                    oninput="validateNumber(this); recalculateAll();" style="text-align: center;">
+                            </td>
+                            <td style="text-align: center;">-</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>
+                                <input type="text" id="autoMaterialWear4" placeholder="输入磨损值"
+                                    oninput="handleMaterialInput(4, this)" onfocus="handleMaterialFocus(4, this)"
+                                    onblur="handleMaterialBlur(4, this)" style="text-align: center;">
+                            </td>
+                            <td>
+                                <input type="text" id="autoMaterialMin4" value="0.00" placeholder="0.00"
+                                    oninput="validateNumber(this); recalculateAll();" style="text-align: center;">
+                            </td>
+                            <td>
+                                <input type="text" id="autoMaterialMax4" value="1.00" placeholder="1.00"
+                                    oninput="validateNumber(this); recalculateAll();" style="text-align: center;">
+                            </td>
+                            <td style="text-align: center;">-</td>
+                        </tr>
+                        <tr>
+                            <td>5</td>
+                            <td>
+                                <input type="text" id="autoMaterialWear5" class="calculated-value" readonly
+                                    style="background-color: #f8f9fa; cursor: not-allowed; text-align: center; color: #28a745; font-weight: bold;">
+                            </td>
+                            <td>
+                                <input type="text" id="autoMaterialMin5" value="0.00" placeholder="0.00"
+                                    oninput="validateNumber(this); recalculateAll();" style="text-align: center;">
+                            </td>
+                            <td>
+                                <input type="text" id="autoMaterialMax5" value="1.00" placeholder="1.00"
+                                    oninput="validateNumber(this); recalculateAll();" style="text-align: center;">
+                            </td>
+                            <td style="text-align: center;">
+                                <button class="primary" onclick="copyAutoMaterialWear(5)"
+                                    style="padding: 6px 12px; font-size: 12px;">复制</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="ieee754Div" class="tabcontent" style="display: none;">
+            <h3 class="section-title">IEEE754 浮点数转换</h3>
+            <div class="criteria-container">
+                <div class="criteria-item">
+                    <h4>目标磨损值</h4>
+                    <input id="desiredIEEEInput" placeholder="0.5" onkeyup="updateIeeeRange()">
+                </div>
+                <div class="criteria-item">
+                    <h4>IEEE754 表示</h4>
+                    <input id="floatIEEEInput" placeholder="0.5" readonly="readonly" value="0.5">
+                </div>
+            </div>
+
+            <div class="criteria-container">
+                <div class="criteria-item">
+                    <h4>最小边界值</h4>
+                    <input id="minIEEEinput" placeholder="0.49999998509883925" readonly="readonly"
+                        value="0.49999998509883925">
+                </div>
+                <div class="criteria-item">
+                    <h4>最大边界值</h4>
+                    <input id="maxIEEEinput" placeholder="0.500000029802264" readonly="readonly"
+                        value="0.500000029802264">
+                </div>
+                <div class="criteria-item">
+                    <h4>中间值</h4>
+                    <input id="middleIEEEinput" placeholder="0.5000000074505516" readonly="readonly"
+                        value="0.5000000074505516">
+                </div>
+            </div>
+        </div>
+
+        <div id="messageToast" class="message-toast success">计算完成</div>
+
+        <div id="aboutAuthorDiv" class="tabcontent" style="display: none;">
+            <h3 class="section-title">盘尼西林</h3>
+
+            <div class="author-container"
+                style="background: var(--card-bg); padding: 30px; border-radius: var(--border-radius); box-shadow: var(--box-shadow);">
+                <div
+                    style="text-align: center; margin-bottom: 40px; padding: 20px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: var(--border-radius);">
+                    <h3 style="color: var(--primary-color); margin-bottom: 20px;">盘尼西林</h3>
+                    <p style="color: var(--text-color); line-height: 1.8; font-size: 16px; margin-bottom: 15px;">
+
+                        从2017年入坑CSGO，我的游戏技术一直都很差，但是这时候我就对游戏皮肤起了兴趣，特别是炼金。2018年在深海少女吉安娜的带领下，接触了特殊磨
+                        损，打开了我新的世界。
+
+                        短位磨损（0.5,0.0625等）、连续磨损（0.006666666等）、BUG磨损（看似酒精0.3799999952316284实际是破损等）
+                        哇学问太多了。但是我不会计算啊，实际上外面已经有一个很牛逼很牛逼的网站了（andersonproescholdbell），
+
+                        写的巨牛逼，我们都是站在巨人的肩膀上。吉安娜他知道有这个网站，但是不告诉我！我真的是用EXCEL一个一个材料复制粘贴上去凑数，比如先买8把材料，
+                        然后算出最后两把平均值，然后去找这两把枪，
+
+                        比如一个比平均值小一点另一个就要大一点，炼隐秘找不到保密材料就去炼最后一个保密，炼保密找不到受限材料就去找最后一个受限...以此类推哈哈哈。真的
+                        很复杂但是乐此不疲，而且以这种笨方法凑出了我的第一把隐秘级特磨枪，是0.5磨损的深海复仇！
+
+                        后面自己写了粗糙的计算程序，但是材料顺序以及IEEE754转换问题以及计算效率问题一直十分的困扰我，后面我才知道了
+                        andersonproescholdbell那个网站，包括材料放的顺序这些问题全部考虑进去了，巨人，膜拜！
+
+                        后面一度自以为是觉得自己炼金这方面天下无敌。直到了解到诞生远古时期的第一龙狙0.0000133742069时，一瞬间才明白什么是井底之蛙、管中窥
+                        豹。现在，全新的材料磨损计算方式，全新的五合一炼金手套和刀皮，是我回报特殊磨损的时候了！
+
+                    </p>
+                    <p style="color: var(--text-color); line-height: 1.8; font-size: 16px;">
+                        少年，特磨的大门为你敞开，迎接你的0.06666666潘多拉手套，迎接你的0.000888888绿宝石蝴蝶刀吧！
+                    </p>
+                </div>
+
+                <div
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 40px;">
+                    <div class="social-card"
+                        style="background: linear-gradient(135deg, #00A1D6 0%, #0084B4 100%); padding: 25px; border-radius: var(--border-radius); text-align: center; color: white; cursor: pointer;"
+                        onclick="window.open('https://space.bilibili.com/161872957', '_blank')">
+                        <div style="font-size: 40px; margin-bottom: 15px;">📺</div>
+                        <h4 style="margin-bottom: 10px; font-weight: 600;">B站主页</h4>
+                        <p style="opacity: 0.9; font-size: 14px; margin-bottom: 15px;">观看我的炼金视频</p>
+                        <button class="primary"
+                            style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); padding: 8px 20px; font-size: 14px;">
+                            访问主页
+                        </button>
+                    </div>
+                    <div class="social-card"
+                        style="background: linear-gradient(135deg, #000000 0%, #333333 100%); padding: 25px; border-radius: var(--border-radius); text-align: center; color: white; cursor: pointer;"
+                        onclick="window.open('https://v.douyin.com/mC58bI0Vdmo/ 7@9.com :1pm', '_blank')">
+                        <div style="font-size: 40px; margin-bottom: 15px;">🎵</div>
+                        <h4 style="margin-bottom: 10px; font-weight: 600;">抖音账号</h4>
+                        <p style="opacity: 0.9; font-size: 14px; margin-bottom: 15px;">关注我的抖音</p>
+                        <button class="primary"
+                            style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); padding: 8px 20px; font-size: 14px;">
+                            访问账号
+                        </button>
+                    </div>
+                    <div class="social-card"
+                        style="background: linear-gradient(135deg, #FF6B35 0%, #FF8E53 100%); padding: 25px; border-radius: var(--border-radius); text-align: center; color: white; cursor: pointer;"
+                        onclick="window.open('https://buff.163.com/shop/U1098252483#tab=selling&amp;game=csgo&amp;page_num=1', '_blank')">
+                        <div style="font-size: 40px; margin-bottom: 15px;">🛒</div>
+                        <h4 style="margin-bottom: 10px; font-weight: 600;">BUFF商店</h4>
+                        <p style="opacity: 0.9; font-size: 14px; margin-bottom: 15px;">王菲</p>
+                        <button class="primary"
+                            style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); padding: 8px 20px; font-size: 14px;">
+                            访问商店
+                        </button>
+                    </div>
+                    <div class="social-card"
+                        style="background: linear-gradient(135deg, #1B2838 0%, #2A475E 100%); padding: 25px; border-radius: var(--border-radius); text-align: center; color: white; cursor: pointer;"
+                        onclick="window.open('https://steamcommunity.com/id/98801', '_blank')">
+                        <div style="font-size: 40px; margin-bottom: 15px;">🎯</div>
+                        <h4 style="margin-bottom: 10px; font-weight: 600;">Steam主页</h4>
+                        <p style="opacity: 0.9; font-size: 14px; margin-bottom: 15px;">添加我为游戏好友</p>
+                        <button class="primary"
+                            style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); padding: 8px 20px; font-size: 14px;">
+                            访问主页
+                        </button>
+                    </div>
+
+                </div>
+                <div
+                    style="margin-top: 30px; padding: 25px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: var(--border-radius); color: white; text-align: center;">
+                    <p style="margin-bottom: 20px; opacity: 0.9; line-height: 1.6; font-size: 16px;">
+                        感谢你的使用！如果这个工具对你有帮助，欢迎通过以上平台关注我。<br>
+                        Q群交流：6800808
+                    </p>
+                </div>
+
+                <div style="margin-top: 25px; text-align: center; color: var(--secondary-color); font-size: 13px;">
+                    <p>感谢每一位使用者，感谢我的粉丝</p>
+                </div>
+            </div>
+        </div>
+        <script src="script.js"></script>
 </body>
+
 </html>
