@@ -847,6 +847,22 @@
                 transform: rotate(360deg);
             }
         }
+
+        .ieee754-display {
+            padding: 2px 0;
+            background-color: transparent;
+            border: none;
+            font-size: 12px;
+            color: #6c757d;
+            line-height: 1.2;
+        }
+
+        .ieee754-value {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            font-weight: 600;
+            color: #6c757d;
+        }
     </style>
 </head>
 
@@ -949,7 +965,10 @@
                 </div>
                 <div class="criteria-item">
                     <h4>目标磨损值</h4>
-                    <input id="fcCdesiredfloatinput" placeholder="输入目标磨损">
+                    <input id="fcCdesiredfloatinput" placeholder="输入目标磨损" oninput="updateTargetWearIEEE()">
+                    <div id="targetWearIEEEDisplay" class="ieee754-display" style="display: none">
+                        IEEE754(实际磨损) :<span id="targetWearIEEEValue" class="ieee754-value"></span>
+                    </div>
                 </div>
                 <div class="criteria-item">
                     <h4>计算精确度</h4>
@@ -2591,6 +2610,34 @@
                         `找到 ${searchResults.length} 个结果 (${currentSearchIndex + 1}/${searchResults.length})`;
                 }
             }
+            function updateTargetWearIEEE() {
+                const displayElement = document.getElementById('targetWearIEEEDisplay');
+                const valueElement = document.getElementById('targetWearIEEEValue');
+                const inputElement = document.getElementById('fcCdesiredfloatinput');
+
+                const value = inputElement.value.trim();
+
+                if (value === '') {
+                    displayElement.style.display = 'none';
+                    return;
+                }
+
+                const numValue = parseFloat(value);
+                if (isNaN(numValue)) {
+                    displayElement.style.display = 'block';
+                    valueElement.textContent = '无效数字';
+                    valueElement.style.color = '#dc3545';
+                    return;
+                }
+
+                // 直接复用第四页的IEEE754转换逻辑
+                const desiredFloat = Number(value);
+                const desiredIEEE = Utils.getIEEE754(desiredFloat);
+
+                displayElement.style.display = 'block';
+                valueElement.textContent = desiredIEEE.toString();
+                valueElement.style.color = '#495057';
+            }
 
             document.addEventListener('DOMContentLoaded', function () {
                 initMaterialTypes();
@@ -2624,7 +2671,11 @@
                         }
                     }
                 }, 100);
-
+                // 如果目标磨损值已经有内容，初始化显示
+                const inputElement = document.getElementById('fcCdesiredfloatinput');
+                if (inputElement && inputElement.value.trim()) {
+                    updateTargetWearIEEE();
+                }
                 const materialCountSelect = document.getElementById('materialCountSelect');
                 if (materialCountSelect) {
                     MATERIAL_COUNT = parseInt(materialCountSelect.value);
@@ -2642,6 +2693,5 @@
             });
         </script>
 </body>
-
 
 </html>
