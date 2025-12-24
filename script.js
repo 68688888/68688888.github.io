@@ -124,6 +124,10 @@ class MaterialValidator {
             return { valid: false, message: '材料不存在' };
         }
 
+        if (this._isRestrictedItem(material.name)) {
+            return { valid: false, message: `${material.name} 是限定物品，不能作为合成材料` };
+        }
+
         if (materialCount === 5 && material.grade !== 'covert') {
             return { valid: false, message: '5个材料合成只能选择隐秘级材料' };
         }
@@ -157,6 +161,20 @@ class MaterialValidator {
         }
 
         return { valid: true };
+    }
+
+    static _isRestrictedItem(itemName) {
+        const restrictedItems = crateDatabase["限定物品"];
+        if (!restrictedItems) return false;
+        const restrictedGrades = ['restricted', 'classified', 'covert', 'milspec', 'industrial', 'consumer'];
+        for (const grade of restrictedGrades) {
+            if (restrictedItems[grade] && Array.isArray(restrictedItems[grade])) {
+                if (restrictedItems[grade].includes(itemName)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     static _canMaterialBeUsedForSynthesis(material, materialCount) {
@@ -385,14 +403,14 @@ class MaterialManager {
 
     static init() {
         const countSelect = document.getElementById('materialCountSelect');
-    if (countSelect) {
-        this.count = parseInt(countSelect.value) || 5;
-    }
-    
-    const typeSelect = document.getElementById('materialTypeCountSelect');
-    if (typeSelect) {
-        this.typeCount = parseInt(typeSelect.value) || 1;
-    }
+        if (countSelect) {
+            this.count = parseInt(countSelect.value) || 5;
+        }
+
+        const typeSelect = document.getElementById('materialTypeCountSelect');
+        if (typeSelect) {
+            this.typeCount = parseInt(typeSelect.value) || 1;
+        }
         for (let i = 1; i <= 10; i++) {
             if (!this.data[i]) {
                 this.data[i] = {
@@ -1237,18 +1255,18 @@ class CombinationCalculator {
             if (progress_bar) progress_bar.style.width = percent_done + '%';
             MessageManager.show(`计算已终止，已完成 ${progress.toLocaleString()} 个组合`, 'info');
         } else {
-        if (progress_bar) progress_bar.style.width = '100%';
-        
-        const resultsContainer = document.getElementById("fcCombinationsText");
-        const resultCount = resultsContainer.querySelectorAll('.real-time-result').length;
-        
-        if (resultCount === 0) {
-            combinationstext.innerHTML = '<div style="text-align: center; padding: 20px; color: #dc3545;">未找到符合条件的组合</div>';
-            MessageManager.show('计算完成，未找到符合条件的组合', 'info');
-        } else {
-            MessageManager.show(`计算完成！找到 ${resultCount} 个有效组合`, 'success');
+            if (progress_bar) progress_bar.style.width = '100%';
+
+            const resultsContainer = document.getElementById("fcCombinationsText");
+            const resultCount = resultsContainer.querySelectorAll('.real-time-result').length;
+
+            if (resultCount === 0) {
+                combinationstext.innerHTML = '<div style="text-align: center; padding: 20px; color: #dc3545;">未找到符合条件的组合</div>';
+                MessageManager.show('计算完成，未找到符合条件的组合', 'info');
+            } else {
+                MessageManager.show(`计算完成！找到 ${resultCount} 个有效组合`, 'success');
+            }
         }
-    }
 
         MessageManager.setLoading(false);
         this.inProgress = false;
@@ -1471,99 +1489,184 @@ class SimpleWearCalculator {
             return [];
         }
 
-        const sourceMaterialCount = new Map();
+        const isCommemorativePackage = (sourceName) => {
+            return sourceName.includes('纪念') ||
+                sourceName.includes('纪念品') ||
+                sourceName.includes('锦标赛') && sourceName.includes('纪念包') ||
+                sourceName.includes('souvenir') ||
+                sourceName.includes('Souvenir');  
+        };
+
+        const isValidSource = (sourceName, sourceType) => {
+            if (isCommemorativePackage(sourceName)) {
+                return false;
+            }
+
+            const source = crateDatabase[sourceName];
+            return source && source[targetGrade] && source[targetGrade].length > 0;
+        };
+
+        const sourceMaterialsCount = new Map(); 
+        const sourceProductsMap = new Map();  
 
         for (const material of specificMaterials) {
+            let foundValidSource = false;
+            const materialValidSources = new Set(); 
+
             if (material.crates) {
                 for (const crateName of material.crates) {
-                    const sourceKey = `crate:${crateName}`;
-                    sourceMaterialCount.set(sourceKey, (sourceMaterialCount.get(sourceKey) || 0) + 1);
+
+                    if (isCommemorativePackage(crateName)) {
+                        continue;
+                    }
+
+                    if (isValidSource(crateName, 'crate')) {
+                        foundValidSource = true;
+                        const sourceKey = `crate:${crateName}`;
+                        materialValidSources.add(sourceKey);
+                    }
                 }
             }
 
             if (material.collections) {
                 for (const collectionName of material.collections) {
-                    const sourceKey = `collection:${collectionName}`;
-                    sourceMaterialCount.set(sourceKey, (sourceMaterialCount.get(sourceKey) || 0) + 1);
+
+                    if (isCommemorativePackage(collectionName)) {
+                        continue;
+                    }
+
+                    if (isValidSource(collectionName, 'collection')) {
+                        foundValidSource = true;
+                        const sourceKey = `collection:${collectionName}`;
+                        materialValidSources.add(sourceKey);
+                    }
                 }
+            }
+
+            if (!foundValidSource) {
+                const otherSourceFields = ['source', 'containers', 'origin', 'from', 'case', 'container', 'drop', 'obtain', 'acquire'];
+
+                for (const field of otherSourceFields) {
+                    if (material[field] && Array.isArray(material[field])) {
+                        for (const sourceName of material[field]) {
+                            if (isCommemorativePackage(sourceName)) {
+                                continue;
+                            }
+
+                            if (isValidSource(sourceName, 'other')) {
+                                foundValidSource = true;
+                                const sourceKey = `other:${sourceName}`;
+                                materialValidSources.add(sourceKey);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!foundValidSource || materialValidSources.size === 0) {
+                MessageManager.show(`${material.name} 没有可用的有效来源（可能来自纪念包，不可合成）`, 'warning');
+                continue;
+            }
+
+            for (const sourceKey of materialValidSources) {
+                const [sourceType, sourceName] = sourceKey.split(':');
+                const source = crateDatabase[sourceName];
+
+                sourceMaterialsCount.set(sourceKey, (sourceMaterialsCount.get(sourceKey) || 0) + 1);
+                sourceProductsMap.set(sourceKey, source[targetGrade]);
             }
         }
 
-        let validSources = [];
-        for (const [sourceKey, count] of sourceMaterialCount) {
+        const validMaterialCount = Array.from(sourceMaterialsCount.values())
+            .reduce((sum, count) => sum + count, 0);
+
+        if (validMaterialCount < this.count) {
+            MessageManager.show(`有${this.count - validMaterialCount}个材料来自纪念包，不可用于合成`, 'error');
+            return [];
+        }
+
+        const materialWeight = this.count === 5 ? 20 : 10; 
+
+        const productProbabilityMap = new Map();
+
+        for (const [sourceKey, materialCount] of sourceMaterialsCount) {
             const [sourceType, sourceName] = sourceKey.split(':');
-            const source = crateDatabase[sourceName];
 
-            if (source && source[targetGrade] && source[targetGrade].length > 0) {
-                validSources.push({
-                    type: sourceType,
-                    name: sourceName,
-                    materialCount: count,
-                    products: source[targetGrade]
-                });
+            if (isCommemorativePackage(sourceName)) {
+                continue;
+            }
+
+            const products = sourceProductsMap.get(sourceKey);
+            if (!products || products.length === 0) continue;
+            const sourceTotalProbability = materialCount * materialWeight;
+
+            const productProbability = sourceTotalProbability / products.length;
+
+            for (const productName of products) {
+                const currentProbability = productProbabilityMap.get(productName) || 0;
+                productProbabilityMap.set(productName, Utils.getIEEE754(currentProbability + productProbability));
             }
         }
 
-        if (validSources.length === 0) {
-            MessageManager.show('所选材料没有共同的上级产物来源', 'error');
-            return [];
-        }
+        const products = [];
 
-        const totalMaterials = specificMaterials.length;
-        const productMap = new Map();
+        for (const [productName, probability] of productProbabilityMap) {
+            const productInfo = MaterialFinder.findByName(productName);
+            if (!productInfo) continue;
 
-        for (const source of validSources) {
-            const sourceProbability = (source.materialCount / totalMaterials) * 100;
-            const productProbability = sourceProbability / source.products.length;
+            const sourceInfoList = [];
+            for (const [sourceKey, materialCount] of sourceMaterialsCount) {
+                const [sourceType, sourceName] = sourceKey.split(':');
+                if (isCommemorativePackage(sourceName)) continue;
+                const products = sourceProductsMap.get(sourceKey);
 
-            for (const productName of source.products) {
-                const productInfo = MaterialFinder.findByName(productName);
-                if (!productInfo) continue;
-
-                if (!productMap.has(productName)) {
-                    productMap.set(productName, {
-                        name: productName,
-                        grade: targetGrade,
-                        min: productInfo.min,
-                        max: productInfo.max,
-                        probability: 0,
-                        sources: new Map()
-                    });
+                if (products && products.includes(productName)) {
+                    const sourceTypeText = sourceType === 'crate' ? '武器箱' :
+                        sourceType === 'collection' ? '收藏品' : '其他来源';
+                    sourceInfoList.push(sourceName);
                 }
-
-                const product = productMap.get(productName);
-                product.probability = Utils.getIEEE754(product.probability + productProbability);
-                product.sources.set(`${source.type}:${source.name}`, {
-                    type: source.type,
-                    name: source.name,
-                    materialCount: source.materialCount
-                });
             }
+
+            if (sourceInfoList.length === 0) continue;
+
+            products.push({
+                name: productName,
+                grade: targetGrade,
+                min: productInfo.min,
+                max: productInfo.max,
+                probability: probability,
+                sourceInfo: sourceInfoList.join('、'),
+                hasMultipleMaterials: sourceInfoList.some(info => {
+                    const match = info.match(/(\d+)个材料/);
+                    return match && parseInt(match[1]) > 1;
+                })
+            });
         }
 
-        const products = Array.from(productMap.values());
         if (products.length === 0) {
-            MessageManager.show('在所选材料来源中未找到目标等级的产物', 'error');
+            MessageManager.show('在所选材料来源中未找到目标等级的产物（可能都来自纪念包）', 'error');
             return [];
         }
 
-        let totalProbability = products.reduce((sum, p) => sum + p.probability, 0);
-        if (Math.abs(totalProbability - 100) > 0.0001) {
+        const totalProbability = products.reduce((sum, p) => sum + p.probability, 0);
+
+        if (Math.abs(totalProbability - 100) > 0.01) {
             const adjustmentFactor = 100 / totalProbability;
             products.forEach(p => {
                 p.probability = Utils.getIEEE754(p.probability * adjustmentFactor);
             });
         }
-
-        products.forEach(product => {
-            const sourceList = [];
-            for (const [sourceKey, sourceInfo] of product.sources) {
-                sourceList.push(sourceInfo.name);
+        products.sort((a, b) => {
+            if (Math.abs(b.probability - a.probability) > 0.001) {
+                return b.probability - a.probability;
             }
-            product.sourceInfo = sourceList.join('、');
+            if (a.hasMultipleMaterials !== b.hasMultipleMaterials) {
+                return b.hasMultipleMaterials ? 1 : -1;
+            }
+            return 0;
         });
 
-        products.sort((a, b) => b.probability - a.probability);
         return products;
     }
 
