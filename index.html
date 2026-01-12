@@ -2,13 +2,14 @@
 <html lang="zh-CN">
 
 <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="public, max-age=86400">
     <meta http-equiv="Expires" content="86400">
     <title>西林磨损计算器</title>
-    <link rel="icon" href="./favicon.ico" type="image/x-icon">
-    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -28,14 +29,14 @@
                 <div class="selector-container">
                     <h4>选择合成材料数量</h4>
                     <select id="materialCountSelect" onchange="MaterialManager.updateCount()">
-                        <option value="5" selected>5个材料</option>
+                        <option value="5" selected="selected">5个材料</option>
                         <option value="10">10个材料</option>
                     </select>
                 </div>
                 <div class="selector-container">
                     <h4>选择材料种类数量</h4>
                     <select id="materialTypeCountSelect" onchange="MaterialManager.updateTypeCount()">
-                        <option value="1" selected>1种材料</option>
+                        <option value="1" selected="selected">1种材料</option>
                         <option value="2">2种材料</option>
                         <option value="3">3种材料</option>
                         <option value="4">4种材料</option>
@@ -49,15 +50,54 @@
                 </div>
             </div>
 
-            <div id="materialTypeContainers" class="material-types-container"></div>
+            <div id="materialTypeContainers" class="material-types-container">
+                <div class="material-type-container" id="materialType1">
+                    <div class="material-type-header">
+                        <div class="material-type-color material-type-1"></div>
+                        <h4>材料种类 1</h4>
+                    </div>
+                    <div class="material-wear-range">
+                        <div style="flex: 2; position: relative;">
+                            <h4>选择材料</h4>
+                            <div class="material-search-container">
+                                <input type="text" id="materialSearch1" class="material-search-input"
+                                    placeholder="搜索材料名称..." oninput="MaterialSearch.search(1, this.value, 'special')"
+                                    onfocus="MaterialSearch.showDropdown(1, 'special')"
+                                    onblur="MaterialSearch.hideDropdown(1, 'special')">
+                                <div id="materialDropdown1" class="material-dropdown"></div>
+                            </div>
+                        </div>
+                        <div style="flex: 1; min-width: 170px;">
+                            <div class="wear-range-display">
+                                <div class="wear-range-label">磨损区间</div>
+                                <div id="wearRangeDisplay1" class="wear-range-value">0.000000-0.800000</div>
+                            </div>
+                        </div>
+                    </div>
+                    <textarea id="fcAltInput1" class="material-type-textarea"
+                        placeholder="输入材料种类 1 的磨损数据...<br>CTRL+A整页复制粘贴过来，点击提取后会自动提取其中磨损值（如果带材料名字会自动提取，但是建议自己输材料名字）"></textarea>
+                    <div class="material-type-buttons">
+                        <button class="primary" onclick="MaterialManager.extractFloats(1)">提取数据</button>
+                    </div>
+                    <textarea id="fcOutput1" class="material-type-output" readonly="readonly"
+                        placeholder="提取的材料数据将显示在这里"></textarea>
+                    <textarea id="fcCumulative1" class="material-type-output" readonly="readonly"
+                        placeholder="累计的材料数据将显示在这里"></textarea>
+                    <div class="material-type-buttons">
+                        <button class="secondary" onclick="MaterialManager.copy(1)">复制数据</button>
+                        <button class="primary" onclick="MaterialManager.mergeToTotal(1)">汇总数据</button>
+                        <button class="secondary" onclick="MaterialManager.clearType(1)">清除数据</button>
+                    </div>
+                </div>
+            </div>
 
             <div class="action-buttons">
-                <button class="danger" onclick="MaterialManager.clearCurrentTab()">清空本页所有数据</button>
+                <button class="danger" onclick="CombinationCalculator.clearCurrentTab()">清空本页所有数据</button>
             </div>
 
             <h3 class="section-title">数据处理</h3>
             <textarea id="fcAltInput" onkeyup="CombinationCalculator.updatePreview()" rows="4"
-                placeholder="在此输入总的材料数据，或使用上方的汇总功能..."></textarea>
+                placeholder="提取完材料后点汇总，便汇总到这里..."></textarea>
 
             <h3 class="section-title">计算参数</h3>
             <div class="criteria-container">
@@ -73,7 +113,7 @@
                     <h4>目标磨损值</h4>
                     <input id="fcCdesiredfloatinput" placeholder="输入目标磨损"
                         oninput="IEEE754.updateDisplay('fcCdesiredfloatinput', 'targetWearIEEEValue', 'targetWearIEEEDisplay')">
-                    <div id="targetWearIEEEDisplay" class="ieee754-display">
+                    <div id="targetWearIEEEDisplay" class="ieee754-display" style="display: none;">
                         IEEE754(实际磨损): <span id="targetWearIEEEValue" class="ieee754-value"></span>
                     </div>
                 </div>
@@ -86,7 +126,7 @@
             <div class="action-buttons">
                 <button class="primary" onclick="CombinationCalculator.start()">开始计算</button>
                 <button class="danger" id="stopButton" onclick="CombinationCalculator.terminate()"
-                    disabled>终止计算</button>
+                    disabled="disabled">终止计算</button>
             </div>
 
             <div class="result-info" id="fcTotalCombosText">等待计算...</div>
@@ -105,18 +145,48 @@
                 </div>
             </div>
             <div class="info-box">
-                <strong>注意：</strong> 1.请严格按照计算出来的顺序（从前往后）放入炉子。如果用BUFF或简易计算验证后发现数值不一样（往往是第七位以后不一样）请不要担心，按计算出来的顺序放不会错。2.计算10个材料建议放30个左右数据，计算5个材料建议放80个左右数据，请按照成品区间找大致材料区间（不明白可以去自动配材试），算不出结果就是材料太偏离目标了。
+                <strong>注意：<br></strong>
+                1.请严格按照计算出来的顺序（从前往后）放入炉子。如果用BUFF或简易计算验证后发现数值不一样（往往是第七位以后不一样）请不要担心。<br>
+                2.计算10个材料建议放30个左右数据，计算5个材料建议放70个左右数据。不够再加，一次加多了会很慢因为结果指数级增长。<br>
+                3.现在支持连续计算，选择一个结果后，在炉数控制中点击"计算下一炉"，会自动剔除已选材料然后再次进行计算，主要在五合一场景下使用。
             </div>
             <div id="fcCombinationsText"></div>
+            <div id="batchResultsContainer"></div>
+            <div id="batchControlArea" class="selector-container" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h4 style="margin: 0;">炉数控制</h4>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="color: var(--text-secondary);">炉数:</span>
+                        <span id="currentBatchNumber"
+                            style="background: var(--primary-gradient); color: white; padding: 4px 12px; border-radius: 20px; font-weight: 600;">
+                            1
+                        </span>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                    <button onclick="CombinationCalculator.calculateNextBatch()" class="primary">
+                        计算下一炉
+                    </button>
+                    <button onclick="CombinationCalculator.clearSelection()" class="secondary">
+                        清除选择
+                    </button>
+                    <button onclick="CombinationCalculator.terminate()" class="danger">
+                        终止计算
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div id="wearCalculationDiv" class="tabcontent">
             <h3 class="section-title">简易磨损计算</h3>
+            <div class="info-box">
+                和BUFF以及所有平台一样的根据材料计算产物磨损以及概率的工具。</div>
             <div class="selector-group">
                 <div class="selector-container">
                     <h4>选择材料数量</h4>
                     <select id="simpleMaterialCount" onchange="SimpleWearCalculator.updateTable()">
-                        <option value="5" selected>5个材料</option>
+                        <option value="5" selected="selected">5个材料</option>
                         <option value="10">10个材料</option>
                     </select>
                 </div>
@@ -133,7 +203,103 @@
                             <th>磨损区间</th>
                         </tr>
                     </thead>
-                    <tbody id="materialTableBody"></tbody>
+                    <tbody id="materialTableBody">
+                        <tr>
+                            <td>1</td>
+                            <td>
+                                <input type="text" id="materialWear1" placeholder="输入磨损值"
+                                    oninput="InputValidator.number(this)">
+                            </td>
+                            <td>
+                                <div class="material-search-container">
+                                    <input type="text" id="simpleMaterialSelect1" class="material-search-input"
+                                        placeholder="搜索材料名称" oninput="MaterialSearch.search(1, this.value, 'simple')"
+                                        onfocus="MaterialSearch.showDropdown(1, 'simple')"
+                                        onblur="MaterialSearch.hideDropdown(1, 'simple')">
+                                    <div id="simpleMaterialDropdown1" class="material-dropdown"></div>
+                                </div>
+                            </td>
+                            <td>
+                                <span id="simpleMaterialRange1" class="range-text">0.000000-1.000000</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>
+                                <input type="text" id="materialWear2" placeholder="输入磨损值"
+                                    oninput="InputValidator.number(this)">
+                            </td>
+                            <td>
+                                <div class="material-search-container">
+                                    <input type="text" id="simpleMaterialSelect2" class="material-search-input"
+                                        placeholder="搜索材料名称" oninput="MaterialSearch.search(2, this.value, 'simple')"
+                                        onfocus="MaterialSearch.showDropdown(2, 'simple')"
+                                        onblur="MaterialSearch.hideDropdown(2, 'simple')">
+                                    <div id="simpleMaterialDropdown2" class="material-dropdown"></div>
+                                </div>
+                            </td>
+                            <td>
+                                <span id="simpleMaterialRange2" class="range-text">0.000000-1.000000</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>
+                                <input type="text" id="materialWear3" placeholder="输入磨损值"
+                                    oninput="InputValidator.number(this)">
+                            </td>
+                            <td>
+                                <div class="material-search-container">
+                                    <input type="text" id="simpleMaterialSelect3" class="material-search-input"
+                                        placeholder="搜索材料名称" oninput="MaterialSearch.search(3, this.value, 'simple')"
+                                        onfocus="MaterialSearch.showDropdown(3, 'simple')"
+                                        onblur="MaterialSearch.hideDropdown(3, 'simple')">
+                                    <div id="simpleMaterialDropdown3" class="material-dropdown"></div>
+                                </div>
+                            </td>
+                            <td>
+                                <span id="simpleMaterialRange3" class="range-text">0.000000-1.000000</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>
+                                <input type="text" id="materialWear4" placeholder="输入磨损值"
+                                    oninput="InputValidator.number(this)">
+                            </td>
+                            <td>
+                                <div class="material-search-container">
+                                    <input type="text" id="simpleMaterialSelect4" class="material-search-input"
+                                        placeholder="搜索材料名称" oninput="MaterialSearch.search(4, this.value, 'simple')"
+                                        onfocus="MaterialSearch.showDropdown(4, 'simple')"
+                                        onblur="MaterialSearch.hideDropdown(4, 'simple')">
+                                    <div id="simpleMaterialDropdown4" class="material-dropdown"></div>
+                                </div>
+                            </td>
+                            <td>
+                                <span id="simpleMaterialRange4" class="range-text">0.000000-1.000000</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>5</td>
+                            <td>
+                                <input type="text" id="materialWear5" placeholder="输入磨损值"
+                                    oninput="InputValidator.number(this)">
+                            </td>
+                            <td>
+                                <div class="material-search-container">
+                                    <input type="text" id="simpleMaterialSelect5" class="material-search-input"
+                                        placeholder="搜索材料名称" oninput="MaterialSearch.search(5, this.value, 'simple')"
+                                        onfocus="MaterialSearch.showDropdown(5, 'simple')"
+                                        onblur="MaterialSearch.hideDropdown(5, 'simple')">
+                                    <div id="simpleMaterialDropdown5" class="material-dropdown"></div>
+                                </div>
+                            </td>
+                            <td>
+                                <span id="simpleMaterialRange5" class="range-text">0.000000-1.000000</span>
+                            </td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
 
@@ -146,18 +312,22 @@
 
         <div id="autoCalculationDiv" class="tabcontent">
             <h3 class="section-title">自动配材</h3>
+            <div class="info-box">
+                1.根据你的目标磨损，以及你需要的材料，自动计算需要的材料磨损。或是根据你现有的材料和磨损，来计算你还需要的材料磨损。自己摸索一下吧。<br>
+                2.最后一个可以复制是在你有（比如十合一有9个材料了，或者五合一有4个材料了）的场景下，计算并复制最后一个材料，用特殊磨损的方式炼出来来达到目标磨损。
+            </div>
             <div class="selector-group">
                 <div class="selector-container">
                     <h4>选择材料数量</h4>
                     <select id="autoMaterialCount" onchange="AutoMaterialCalculator.updateTable()">
-                        <option value="5" selected>5个材料</option>
+                        <option value="5" selected="selected">5个材料</option>
                         <option value="10">10个材料</option>
                     </select>
                 </div>
                 <div class="selector-container">
                     <h4>目标磨损等级</h4>
                     <select id="targetWearGrade" onchange="AutoMaterialCalculator.updateTargetRange()">
-                        <option value="factory_new" selected>崭新出厂 (0-0.070000)</option>
+                        <option value="factory_new" selected="selected">崭新出厂 (0-0.070000)</option>
                         <option value="minimal_wear">略有磨损 (0.070000-0.150000)</option>
                         <option value="field_tested">久经沙场 (0.150000-0.380000)</option>
                         <option value="well_worn">破损不堪 (0.380000-0.450000)</option>
@@ -172,19 +342,19 @@
                 <div class="criteria-item">
                     <h4>目标产物最小磨损</h4>
                     <input type="text" id="autoTargetMin" placeholder="最小磨损"
-                        oninput="InputValidator.number(this); AutoMaterialCalculator.recalculate();">
+                        oninput="InputValidator.number(this); AutoMaterialCalculator.recalculate();" value="0.000000">
                 </div>
                 <div class="criteria-item">
                     <h4>目标产物最大磨损</h4>
                     <input type="text" id="autoTargetMax" placeholder="最大磨损"
-                        oninput="InputValidator.number(this); AutoMaterialCalculator.recalculate();">
+                        oninput="InputValidator.number(this); AutoMaterialCalculator.recalculate();" value="0.800000">
                 </div>
                 <div class="criteria-item">
                     <h4>目标磨损值</h4>
                     <input type="text" id="autoTargetWear" value="0.070000" placeholder="目标磨损"
                         oninput="InputValidator.number(this); AutoMaterialCalculator.recalculate(); IEEE754.updateDisplay('autoTargetWear', 'autoTargetWearIEEEValue', 'autoTargetWearIEEEDisplay')"
-                        disabled style="background-color: #f8f9fa;">
-                    <div id="autoTargetWearIEEEDisplay" class="ieee754-display">
+                        disabled="disabled" style="background-color: #f8f9fa;">
+                    <div id="autoTargetWearIEEEDisplay" class="ieee754-display" style="display: none;">
                         IEEE754: <span id="autoTargetWearIEEEValue" class="ieee754-value"></span>
                     </div>
                 </div>
@@ -202,7 +372,122 @@
                             <th>操作</th>
                         </tr>
                     </thead>
-                    <tbody id="autoMaterialTableBody"></tbody>
+                    <tbody id="autoMaterialTableBody">
+                        <tr>
+                            <td>1</td>
+                            <td>
+                                <input type="text" id="autoMaterialWear1" placeholder="输入磨损值"
+                                    oninput="AutoMaterialCalculator.handleMaterialInput(1, this)"
+                                    onfocus="AutoMaterialCalculator.handleMaterialFocus(1, this)"
+                                    onblur="AutoMaterialCalculator.handleMaterialBlur(1, this)" class="calculated-value"
+                                    style="color: rgb(220, 53, 69); font-style: italic;" value="无法计算">
+                            </td>
+                            <td>
+                                <div class="material-search-container">
+                                    <input type="text" id="autoMaterialSelect1" class="material-search-input"
+                                        placeholder="搜索材料名称" oninput="MaterialSearch.search(1, this.value, 'auto')"
+                                        onfocus="MaterialSearch.showDropdown(1, 'auto')"
+                                        onblur="MaterialSearch.hideDropdown(1, 'auto')">
+                                    <div id="autoMaterialDropdown1" class="material-dropdown"></div>
+                                </div>
+                            </td>
+                            <td>
+                                <span id="autoMaterialRange1" class="range-text">0.000000-1.000000</span>
+                            </td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>
+                                <input type="text" id="autoMaterialWear2" placeholder="输入磨损值"
+                                    oninput="AutoMaterialCalculator.handleMaterialInput(2, this)"
+                                    onfocus="AutoMaterialCalculator.handleMaterialFocus(2, this)"
+                                    onblur="AutoMaterialCalculator.handleMaterialBlur(2, this)" class="calculated-value"
+                                    style="color: rgb(220, 53, 69); font-style: italic;" value="无法计算">
+                            </td>
+                            <td>
+                                <div class="material-search-container">
+                                    <input type="text" id="autoMaterialSelect2" class="material-search-input"
+                                        placeholder="搜索材料名称" oninput="MaterialSearch.search(2, this.value, 'auto')"
+                                        onfocus="MaterialSearch.showDropdown(2, 'auto')"
+                                        onblur="MaterialSearch.hideDropdown(2, 'auto')">
+                                    <div id="autoMaterialDropdown2" class="material-dropdown"></div>
+                                </div>
+                            </td>
+                            <td>
+                                <span id="autoMaterialRange2" class="range-text">0.000000-1.000000</span>
+                            </td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>
+                                <input type="text" id="autoMaterialWear3" placeholder="输入磨损值"
+                                    oninput="AutoMaterialCalculator.handleMaterialInput(3, this)"
+                                    onfocus="AutoMaterialCalculator.handleMaterialFocus(3, this)"
+                                    onblur="AutoMaterialCalculator.handleMaterialBlur(3, this)" class="calculated-value"
+                                    style="color: rgb(220, 53, 69); font-style: italic;" value="无法计算">
+                            </td>
+                            <td>
+                                <div class="material-search-container">
+                                    <input type="text" id="autoMaterialSelect3" class="material-search-input"
+                                        placeholder="搜索材料名称" oninput="MaterialSearch.search(3, this.value, 'auto')"
+                                        onfocus="MaterialSearch.showDropdown(3, 'auto')"
+                                        onblur="MaterialSearch.hideDropdown(3, 'auto')">
+                                    <div id="autoMaterialDropdown3" class="material-dropdown"></div>
+                                </div>
+                            </td>
+                            <td>
+                                <span id="autoMaterialRange3" class="range-text">0.000000-1.000000</span>
+                            </td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>
+                                <input type="text" id="autoMaterialWear4" placeholder="输入磨损值"
+                                    oninput="AutoMaterialCalculator.handleMaterialInput(4, this)"
+                                    onfocus="AutoMaterialCalculator.handleMaterialFocus(4, this)"
+                                    onblur="AutoMaterialCalculator.handleMaterialBlur(4, this)" class="calculated-value"
+                                    style="color: rgb(220, 53, 69); font-style: italic;" value="无法计算">
+                            </td>
+                            <td>
+                                <div class="material-search-container">
+                                    <input type="text" id="autoMaterialSelect4" class="material-search-input"
+                                        placeholder="搜索材料名称" oninput="MaterialSearch.search(4, this.value, 'auto')"
+                                        onfocus="MaterialSearch.showDropdown(4, 'auto')"
+                                        onblur="MaterialSearch.hideDropdown(4, 'auto')">
+                                    <div id="autoMaterialDropdown4" class="material-dropdown"></div>
+                                </div>
+                            </td>
+                            <td>
+                                <span id="autoMaterialRange4" class="range-text">0.000000-1.000000</span>
+                            </td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>5</td>
+                            <td>
+                                <input type="text" id="autoMaterialWear5" class="calculated-value" readonly="readonly"
+                                    style="color: rgb(220, 53, 69); font-style: italic;" value="无法计算">
+                            </td>
+                            <td>
+                                <div class="material-search-container">
+                                    <input type="text" id="autoMaterialSelect5" class="material-search-input"
+                                        placeholder="搜索材料名称" oninput="MaterialSearch.search(5, this.value, 'auto')"
+                                        onfocus="MaterialSearch.showDropdown(5, 'auto')"
+                                        onblur="MaterialSearch.hideDropdown(5, 'auto')">
+                                    <div id="autoMaterialDropdown5" class="material-dropdown"></div>
+                                </div>
+                            </td>
+                            <td>
+                                <span id="autoMaterialRange5" class="range-text">0.000000-1.000000</span>
+                            </td>
+                            <td>
+                                <button class="primary" onclick="AutoMaterialCalculator.copyWear(5)">复制</button>
+                            </td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
             <div class="action-buttons">
@@ -262,6 +547,8 @@
 
             <div class="conversion-section">
                 <h3 class="section-title">🧮 IEEE754 转换</h3>
+                <div class="info-box">
+                    CS2的所有磨损值都按照此标准来，IEEE754 表示值便是实际的饰品磨损值，有很多你想要的磨损值实际上不存在。不用管下面的边界值和中间值</div>
                 <div class="criteria-container">
                     <div class="criteria-item">
                         <h4>目标磨损值</h4>
@@ -269,22 +556,21 @@
                     </div>
                     <div class="criteria-item">
                         <h4>IEEE754 表示</h4>
-                        <input id="floatIEEEInput" placeholder="0.50000" readonly value="0.50000">
+                        <input id="floatIEEEInput" placeholder="0.50000" readonly="readonly" value="0">
                     </div>
                 </div>
                 <div class="criteria-container">
                     <div class="criteria-item">
                         <h4>最小边界值</h4>
-                        <input id="minIEEEinput" placeholder="0.49999998509883925" readonly value="0.49999998509883925">
+                        <input id="minIEEEinput" placeholder="0.49999998509883925" readonly="readonly" value="0">
                     </div>
                     <div class="criteria-item">
                         <h4>最大边界值</h4>
-                        <input id="maxIEEEinput" placeholder="0.500000029802264" readonly value="0.500000029802264">
+                        <input id="maxIEEEinput" placeholder="0.500000029802264" readonly="readonly" value="0">
                     </div>
                     <div class="criteria-item">
                         <h4>中间值</h4>
-                        <input id="middleIEEEinput" placeholder="0.5000000074505516" readonly
-                            value="0.5000000074505516">
+                        <input id="middleIEEEinput" placeholder="0.5000000074505516" readonly="readonly" value="0">
                     </div>
                 </div>
             </div>
@@ -295,7 +581,7 @@
             <div class="author-container">
                 <div class="author-intro">
                     <h3>盘尼西林</h3>
-                    
+
                     <p>少年，特磨的大门为你敞开，迎接你的0.06666666手套，迎接你的0.008888888宝石刀吧！</p>
                 </div>
 
@@ -340,12 +626,14 @@
             </div>
         </div>
 
-        <div id="messageToast" class="message-toast"></div>
+        <div id="messageToast" class="message-toast info">5个材料合成：只能选择隐秘级材料（用于合成刀/手套）</div>
     </div>
 
-    <script src="script.js"></script>>
+    <script src="script.js"></script>
     <script src="materials-data.js"></script>
     <script src="crates-data.js"></script>
+
+
 </body>
 
 </html>
