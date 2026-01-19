@@ -1,14 +1,11 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="public, max-age=86400">
-    <meta http-equiv="Expires" content="86400">
     <title>西林磨损计算器</title>
     <link rel="icon" href="favicon.ico" type="image/x-icon">
-    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -21,19 +18,19 @@
             <button class="tabButton" onclick="TabManager.open('aboutAuthorDiv')">盘尼西林</button>
         </div>
         <div id="floatCombosDiv" class="tabcontent active">
-            <h3 class="section-title">材料配置</h3>
-            <div class="selector-group">
-                <div class="selector-container">
+            <h3 class="sectionTitle">材料配置</h3>
+            <div class="selectorGroup">
+                <div class="selectorContainer">
                     <h4>选择合成材料数量</h4>
                     <select id="materialCountSelect" onchange="MaterialManager.updateCount()">
-                        <option value="5" selected="selected">5个材料</option>
+                        <option value="5" selected>5个材料</option>
                         <option value="10">10个材料</option>
                     </select>
                 </div>
-                <div class="selector-container">
+                <div class="selectorContainer">
                     <h4>选择材料种类数量</h4>
                     <select id="materialTypeCountSelect" onchange="MaterialManager.updateTypeCount()">
-                        <option value="1" selected="selected">1种材料</option>
+                        <option value="1" selected>1种材料</option>
                         <option value="2">2种材料</option>
                         <option value="3">3种材料</option>
                         <option value="4">4种材料</option>
@@ -46,105 +43,108 @@
                     </select>
                 </div>
             </div>
-            <div id="materialTypeContainers" class="material-types-container">
-                <div class="material-type-container" id="materialType1"></div>
+            <div id="materialTypeContainers" class="materialTypesContainer"></div>
+            <div id="ratioSettings" class="ratioSettings" style="display: none;">
+                <h4 style="color: var(--primary-color);">主料辅料配比设置</h4>
+                <div style="margin-top: 10px;">
+                    <div class="ratioHeader">
+                        <div id="ratioStatus" class="ratioStatus">未启用主料辅料区分</div>
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <span style="font-weight: 500;">主料占比</span>
+                            <div id="ratioValueDisplay" class="ratioValue">0%</div>
+                        </div>
+                    </div>
+                    <input type="range" id="ratioSlider" min="0" max="100" value="0" step="10" 
+                           class="ratioSlider" oninput="MaterialManager.updateRatioSlider(this.value)">
+                    <div id="ratioTicks" class="ratioTicks"></div>
+                </div>
             </div>
-            <div class="action-buttons">
+            <div class="actionButtons">
                 <button class="danger" onclick="CombinationCalculator.clearCurrentTab()">清空本页所有数据</button>
             </div>
-            <h3 class="section-title">数据处理</h3>
-            <textarea id="fcAltInput" onkeyup="CombinationCalculator.updatePreview()" rows="4"
-                placeholder="提取完材料后点汇总，便汇总到这里..."></textarea>
-            <h3 class="section-title">计算参数</h3>
-            <div class="criteria-container">
-                <div class="criteria-item">
+            <h3 class="sectionTitle">数据处理</h3>
+            <textarea id="fcAltInput" onkeyup="CombinationCalculator.updatePreview()" rows="4" 
+                      placeholder="提取完材料后点汇总，便汇总到这里..."></textarea>
+            <h3 class="sectionTitle">计算参数</h3>
+            <div class="criteriaContainer">
+                <div class="criteriaItem">
                     <h4>目标产物最小磨损</h4>
                     <input id="fcCminwearinput" value="0.000000" placeholder="输入最小磨损">
                 </div>
-                <div class="criteria-item">
+                <div class="criteriaItem">
                     <h4>目标产物最大磨损</h4>
                     <input id="fcCmaxwearinput" placeholder="输入最大磨损">
                 </div>
-                <div class="criteria-item">
+                <div class="criteriaItem">
                     <h4>目标磨损值</h4>
                     <input id="fcCdesiredfloatinput" placeholder="输入目标磨损"
-                        oninput="IEEE754.updateDisplay('fcCdesiredfloatinput', 'targetWearIEEEValue', 'targetWearIEEEDisplay')">
-                    <div id="targetWearIEEEDisplay" class="ieee754-display" style="display: none;">
-                        IEEE754(实际磨损): <span id="targetWearIEEEValue" class="ieee754-value"></span>
+                           oninput="IEEE754.updateDisplay('fcCdesiredfloatinput', 'targetWearIEEEValue', 'targetWearIEEEDisplay')">
+                    <div id="targetWearIEEEDisplay" class="ieee754Display" style="display: none;">
+                        IEEE754(实际磨损): <span id="targetWearIEEEValue" class="ieee754Value"></span>
                     </div>
                 </div>
-                <div class="criteria-item">
+                <div class="criteriaItem">
                     <h4>计算精确度</h4>
                     <input id="fcCspecificityinput" value="0.00000001" placeholder="输入精确度">
                 </div>
             </div>
-            <div class="action-buttons">
+            <div class="actionButtons">
                 <button class="primary" onclick="CombinationCalculator.start()">开始计算</button>
-                <button class="danger" id="stopButton" onclick="CombinationCalculator.terminate()"
-                    disabled="disabled">终止计算</button>
+                <button class="danger" id="stopButton" onclick="CombinationCalculator.terminate()" disabled>终止计算</button>
             </div>
-            <div class="result-info" id="fcTotalCombosText">等待计算...</div>
+            <div class="resultInfo" id="fcTotalCombosText">等待计算...</div>
             <div id="fcTheProgress">
                 <div id="fcProgressBar"></div>
             </div>
-            <h3 class="section-title">计算结果</h3>
-            <div class="search-container">
+            <h3 class="sectionTitle">计算结果</h3>
+            <div class="searchContainer">
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                    <input type="text" id="searchInput" placeholder="在结果中搜索..." class="search-input">
+                    <input type="text" id="searchInput" placeholder="在结果中搜索..." class="searchInput">
                     <button onclick="SearchManager.perform()" class="primary">搜索</button>
                     <button onclick="SearchManager.prev()" class="secondary">上一个</button>
                     <button onclick="SearchManager.next()" class="secondary">下一个</button>
-                    <span id="searchStatus" class="search-status">未搜索</span>
+                    <span id="searchStatus" class="searchStatus">未搜索</span>
                 </div>
             </div>
-            <div class="info-box">
+            <div class="infoBox">
                 <strong>注意：<br></strong>
                 1.请严格按照计算出来的顺序（从前往后）放入炉子。如果用BUFF或简易计算验证后发现数值不一样（往往是第七位以后不一样）请不要担心。<br>
                 2.计算10个材料建议放30个左右数据，计算5个材料建议放70个左右数据。不够再加，一次加多了会很慢因为结果指数级增长。<br>
-                3.现在支持连续计算，选择一个结果后，在炉数控制中点击"计算下一炉"，会自动剔除已选材料然后再次进行计算，主要在五合一场景下使用。
+                3.现在支持连续计算，选择一个结果后，在炉数控制中点击"计算下一炉"，会自动剔除已选材料然后再次进行计算，主要在五合一场景下使用。<br>
+                4.现在支持设置主料（不止一个），简而言之就是把你的材料分成主料辅料两类，设置配比（比如28、46等），可以过滤掉不需要的配比结果，提升计算速度和结果质量。
             </div>
             <div id="fcCombinationsText"></div>
             <div id="batchResultsContainer"></div>
-            <div id="batchControlArea" class="selector-container" style="display: none;">
+            <div id="batchControlArea" class="selectorContainer" style="display: none;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <h4 style="margin: 0;">炉数控制</h4>
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <span style="color: var(--text-secondary);">炉数:</span>
-                        <span id="currentBatchNumber"
-                            style="background: var(--primary-gradient); color: white; padding: 4px 12px; border-radius: 20px; font-weight: 600;">
-                            1
-                        </span>
+                        <span id="currentBatchNumber" class="batchNumber">1</span>
                     </div>
                 </div>
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-                    <button onclick="CombinationCalculator.calculateNextBatch()" class="primary">
-                        计算下一炉
-                    </button>
-                    <button onclick="CombinationCalculator.clearSelection()" class="secondary">
-                        清除选择
-                    </button>
-                    <button onclick="CombinationCalculator.terminate()" class="danger">
-                        终止计算
-                    </button>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                    <button onclick="CombinationCalculator.calculateNextBatch()" class="primary">计算下一炉</button>
+                    <button onclick="CombinationCalculator.terminate()" class="danger">终止计算</button>
                 </div>
             </div>
         </div>
         <div id="wearCalculationDiv" class="tabcontent">
-            <h3 class="section-title">简易磨损计算</h3>
-            <div class="info-box">
-                和BUFF以及所有平台一样的根据材料计算产物磨损以及概率的工具。</div>
-            <div class="selector-group">
-                <div class="selector-container">
+            <h3 class="sectionTitle">简易磨损计算</h3>
+            <div class="infoBox">和BUFF以及所有平台一样的根据材料计算产物磨损以及概率的工具。</div>
+            
+            <div class="selectorGroup">
+                <div class="selectorContainer">
                     <h4>选择材料数量</h4>
                     <select id="simpleMaterialCount" onchange="SimpleWearCalculator.updateTable()">
-                        <option value="5" selected="selected">5个材料</option>
+                        <option value="5" selected>5个材料</option>
                         <option value="10">10个材料</option>
                     </select>
                 </div>
             </div>
-            <h3 class="section-title">材料列表</h3>
-            <div class="table-container">
-                <table class="material-table">
+            <h3 class="sectionTitle">材料列表</h3>
+            <div class="tableContainer">
+                <table class="materialTable">
                     <thead>
                         <tr>
                             <th>序号</th>
@@ -156,30 +156,32 @@
                     <tbody id="materialTableBody"></tbody>
                 </table>
             </div>
-            <div class="action-buttons">
+            <div class="actionButtons">
                 <button class="primary" onclick="SimpleWearCalculator.calculateWithProbability()">开始计算（含产物分析）</button>
                 <button class="danger" onclick="SimpleWearCalculator.clear()">清空本页所有数据</button>
             </div>
-            <div id="productProbabilityResults" class="results-container"></div>
+
+            <div id="productProbabilityResults" class="resultsContainer"></div>
         </div>
         <div id="autoCalculationDiv" class="tabcontent">
-            <h3 class="section-title">自动配材</h3>
-            <div class="info-box">
+            <h3 class="sectionTitle">自动配材</h3>
+            <div class="infoBox">
                 1.根据你的目标磨损，以及你需要的材料，自动计算需要的材料磨损。或是根据你现有的材料和磨损，来计算你还需要的材料磨损。自己摸索一下吧。<br>
                 2.最后一个可以复制是在你有（比如十合一有9个材料了，或者五合一有4个材料了）的场景下，计算并复制最后一个材料，用特殊磨损的方式炼出来来达到目标磨损。
             </div>
-            <div class="selector-group">
-                <div class="selector-container">
+
+            <div class="selectorGroup">
+                <div class="selectorContainer">
                     <h4>选择材料数量</h4>
                     <select id="autoMaterialCount" onchange="AutoMaterialCalculator.updateTable()">
-                        <option value="5" selected="selected">5个材料</option>
+                        <option value="5" selected>5个材料</option>
                         <option value="10">10个材料</option>
                     </select>
                 </div>
-                <div class="selector-container">
+                <div class="selectorContainer">
                     <h4>目标磨损等级</h4>
                     <select id="targetWearGrade" onchange="AutoMaterialCalculator.updateTargetRange()">
-                        <option value="factory_new" selected="selected">崭新出厂 (0-0.070000)</option>
+                        <option value="factory_new" selected>崭新出厂 (0-0.070000)</option>
                         <option value="minimal_wear">略有磨损 (0.070000-0.150000)</option>
                         <option value="field_tested">久经沙场 (0.150000-0.380000)</option>
                         <option value="well_worn">破损不堪 (0.380000-0.450000)</option>
@@ -188,31 +190,32 @@
                     </select>
                 </div>
             </div>
-            <h3 class="section-title">目标产物设置</h3>
-            <div class="criteria-container">
-                <div class="criteria-item">
+            <h3 class="sectionTitle">目标产物设置</h3>
+            <div class="criteriaContainer">
+                <div class="criteriaItem">
                     <h4>目标产物最小磨损</h4>
-                    <input type="text" id="autoTargetMin" placeholder="最小磨损"
-                        oninput="InputValidator.number(this); AutoMaterialCalculator.recalculate();" value="0.000000">
+                    <input type="text" id="autoTargetMin" placeholder="最小磨损" 
+                           oninput="InputValidator.number(this); AutoMaterialCalculator.recalculate();" value="0.000000">
                 </div>
-                <div class="criteria-item">
+                <div class="criteriaItem">
                     <h4>目标产物最大磨损</h4>
-                    <input type="text" id="autoTargetMax" placeholder="最大磨损"
-                        oninput="InputValidator.number(this); AutoMaterialCalculator.recalculate();" value="0.800000">
+                    <input type="text" id="autoTargetMax" placeholder="最大磨损" 
+                           oninput="InputValidator.number(this); AutoMaterialCalculator.recalculate();" value="0.800000">
                 </div>
-                <div class="criteria-item">
+                <div class="criteriaItem">
                     <h4>目标磨损值</h4>
-                    <input type="text" id="autoTargetWear" value="0.070000" placeholder="目标磨损"
-                        oninput="InputValidator.number(this); AutoMaterialCalculator.recalculate(); IEEE754.updateDisplay('autoTargetWear', 'autoTargetWearIEEEValue', 'autoTargetWearIEEEDisplay')"
-                        disabled="disabled" style="background-color: #f8f9fa;">
-                    <div id="autoTargetWearIEEEDisplay" class="ieee754-display" style="display: none;">
-                        IEEE754: <span id="autoTargetWearIEEEValue" class="ieee754-value"></span>
+                    <input type="text" id="autoTargetWear" value="0.070000" placeholder="目标磨损" 
+                           oninput="InputValidator.number(this); AutoMaterialCalculator.recalculate(); 
+                                   IEEE754.updateDisplay('autoTargetWear', 'autoTargetWearIEEEValue', 'autoTargetWearIEEEDisplay')"
+                           disabled style="background-color: #f8f9fa;">
+                    <div id="autoTargetWearIEEEDisplay" class="ieee754Display" style="display: none;">
+                        IEEE754: <span id="autoTargetWearIEEEValue" class="ieee754Value"></span>
                     </div>
                 </div>
             </div>
-            <h3 class="section-title">材料列表</h3>
-            <div class="table-container">
-                <table class="material-table">
+            <h3 class="sectionTitle">材料列表</h3>
+            <div class="tableContainer">
+                <table class="materialTable">
                     <thead>
                         <tr>
                             <th>序号</th>
@@ -225,134 +228,132 @@
                     <tbody id="autoMaterialTableBody"></tbody>
                 </table>
             </div>
-            <div class="action-buttons">
+            <div class="actionButtons">
                 <button class="danger" onclick="AutoMaterialCalculator.clear()">清空本页所有数据</button>
             </div>
         </div>
         <div id="ieee754Div" class="tabcontent">
-            <div class="query-section">
-                <h3 class="section-title">🔍 物品查询</h3>
-                <div class="selector-container">
+            <div class="querySection">
+                <h3 class="sectionTitle">🔍 物品查询</h3>
+                <div class="selectorContainer">
                     <h4>搜索物品信息</h4>
-                    <div class="material-search-container">
-                        <input type="text" id="ieeeSearchInput" class="material-search-input" placeholder="输入物品名称..."
-                            oninput="ItemQuery.search(this.value)" onfocus="ItemQuery.showDropdown()"
-                            onblur="ItemQuery.hideDropdown()">
-                        <div id="ieeeSearchDropdown" class="material-dropdown"></div>
+                    <div class="materialSearchContainer">
+                        <input type="text" id="ieeeSearchInput" class="materialSearchInput" placeholder="输入物品名称..." 
+                               oninput="ItemQuery.search(this.value)" onfocus="ItemQuery.showDropdown()" 
+                               onblur="ItemQuery.hideDropdown()">
+                        <div id="ieeeSearchDropdown" class="materialDropdown"></div>
                     </div>
                 </div>
-                <div id="ieeeResult" class="query-result">
-                    <div class="selector-container result-card">
-                        <h4 id="resultName" class="result-title"></h4>
-                        <div class="result-grid">
-                            <div class="result-item">
-                                <div class="result-label">磨损区间</div>
-                                <div id="resultRange" class="result-value range"></div>
+                <div id="ieeeResult" class="queryResult">
+                    <div class="selectorContainer resultCard">
+                        <h4 id="resultName" class="resultTitle"></h4>
+                        <div class="resultGrid">
+                            <div class="resultItem">
+                                <div class="resultLabel">磨损区间</div>
+                                <div id="resultRange" class="resultValue range"></div>
                             </div>
-                            <div class="result-item">
-                                <div class="result-label">最小磨损</div>
-                                <div id="resultMin" class="result-value min"></div>
+                            <div class="resultItem">
+                                <div class="resultLabel">最小磨损</div>
+                                <div id="resultMin" class="resultValue min"></div>
                             </div>
-                            <div class="result-item">
-                                <div class="result-label">最大磨损</div>
-                                <div id="resultMax" class="result-value max"></div>
+                            <div class="resultItem">
+                                <div class="resultLabel">最大磨损</div>
+                                <div id="resultMax" class="resultValue max"></div>
                             </div>
                         </div>
-                        <div class="sources-container">
-                            <div id="resultCollectionsSection" class="source-section">
-                                <div class="source-label">📚 收藏品</div>
-                                <div id="resultCollections" class="source-content"></div>
+                        <div class="sourcesContainer">
+                            <div id="resultCollectionsSection" class="sourceSection">
+                                <div class="sourceLabel">📚 收藏品</div>
+                                <div id="resultCollections" class="sourceContent"></div>
                             </div>
-                            <div id="resultCratesSection" class="source-section">
-                                <div class="source-label">📦 武器箱</div>
-                                <div id="resultCrates" class="source-content"></div>
+                            <div id="resultCratesSection" class="sourceSection">
+                                <div class="sourceLabel">📦 武器箱</div>
+                                <div id="resultCrates" class="sourceContent"></div>
                             </div>
-                            <div id="resultOtherSources" class="source-section">
-                                <div class="source-label">🔗 其他来源</div>
-                                <div id="resultOther" class="source-content"></div>
+                            <div id="resultOtherSources" class="sourceSection">
+                                <div class="sourceLabel">🔗 其他来源</div>
+                                <div id="resultOther" class="sourceContent"></div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="divider"></div>
-            <div class="conversion-section">
-                <h3 class="section-title">🧮 IEEE754 转换</h3>
-                <div class="info-box">
-                    CS2的所有磨损值都按照此标准来，IEEE754 表示值便是实际的饰品磨损值，有很多你想要的磨损值实际上不存在。不用管下面的边界值和中间值</div>
-                <div class="criteria-container">
-                    <div class="criteria-item">
+            <div class="conversionSection">
+                <h3 class="sectionTitle">🧮 IEEE754 转换</h3>
+                <div class="infoBox">
+                    CS2的所有磨损值都按照此标准来，IEEE754 表示值便是实际的饰品磨损值，有很多你想要的磨损值实际上不存在。不用管下面的边界值和中间值
+                </div>
+                <div class="criteriaContainer">
+                    <div class="criteriaItem">
                         <h4>目标磨损值</h4>
                         <input id="desiredIEEEInput" placeholder="0.50000" onkeyup="IEEE754.updateRange()">
                     </div>
-                    <div class="criteria-item">
+                    <div class="criteriaItem">
                         <h4>IEEE754 表示</h4>
-                        <input id="floatIEEEInput" placeholder="0.50000" readonly="readonly" value="0">
+                        <input id="floatIEEEInput" placeholder="0.50000" readonly value="0">
                     </div>
                 </div>
-                <div class="criteria-container">
-                    <div class="criteria-item">
+                <div class="criteriaContainer">
+                    <div class="criteriaItem">
                         <h4>最小边界值</h4>
-                        <input id="minIEEEinput" placeholder="0.49999998509883925" readonly="readonly" value="0">
+                        <input id="minIEEEinput" placeholder="0.49999998509883925" readonly value="0">
                     </div>
-                    <div class="criteria-item">
+                    <div class="criteriaItem">
                         <h4>最大边界值</h4>
-                        <input id="maxIEEEinput" placeholder="0.500000029802264" readonly="readonly" value="0">
+                        <input id="maxIEEEinput" placeholder="0.500000029802264" readonly value="0">
                     </div>
-                    <div class="criteria-item">
+                    <div class="criteriaItem">
                         <h4>中间值</h4>
-                        <input id="middleIEEEinput" placeholder="0.5000000074505516" readonly="readonly" value="0">
+                        <input id="middleIEEEinput" placeholder="0.5000000074505516" readonly value="0">
                     </div>
                 </div>
             </div>
         </div>
         <div id="aboutAuthorDiv" class="tabcontent">
-            <h3 class="section-title">盘尼西林</h3>
-            <div class="author-container">
-                <div class="author-intro">
+            <h3 class="sectionTitle">盘尼西林</h3>
+            <div class="authorContainer">
+                <div class="authorIntro">
                     <h3>盘尼西林</h3>
                     <p>少年，特磨的大门为你敞开，迎接你的0.06666666手套，迎接你的0.008888888宝石刀吧！</p>
                 </div>
-                <div class="social-grid">
-                    <div class="social-card bilibili"
-                        onclick="window.open('https://space.bilibili.com/161872957', '_blank')">
-                        <div class="social-icon">📺</div>
+                <div class="socialGrid">
+                    <div class="socialCard bilibili" onclick="window.open('https://space.bilibili.com/161872957', '_blank')">
+                        <div class="socialIcon">📺</div>
                         <h4>B站主页</h4>
                         <p>观看我的炼金视频</p>
-                        <button class="social-button">访问主页</button>
+                        <button class="socialButton">访问主页</button>
                     </div>
-                    <div class="social-card douyin"
-                        onclick="window.open('https://v.douyin.com/mC58bI0Vdmo/ 7@9.com :1pm', '_blank')">
-                        <div class="social-icon">🎵</div>
+                    <div class="socialCard douyin" onclick="window.open('https://v.douyin.com/mC58bI0Vdmo/ 7@9.com :1pm', '_blank')">
+                        <div class="socialIcon">🎵</div>
                         <h4>抖音账号</h4>
                         <p>关注我的抖音</p>
-                        <button class="social-button">访问账号</button>
+                        <button class="socialButton">访问账号</button>
                     </div>
-                    <div class="social-card buff"
-                        onclick="window.open('https://buff.163.com/shop/U1098252483#tab=selling&amp;game=csgo&amp;page_num=1', '_blank')">
-                        <div class="social-icon">🛒</div>
+                    <div class="socialCard buff" onclick="window.open('https://buff.163.com/shop/U1098252483#tab=selling&amp;game=csgo&amp;page_num=1', '_blank')">
+                        <div class="socialIcon">🛒</div>
                         <h4>BUFF商店</h4>
                         <p>王菲</p>
-                        <button class="social-button">访问商店</button>
+                        <button class="socialButton">访问商店</button>
                     </div>
-                    <div class="social-card steam"
-                        onclick="window.open('https://steamcommunity.com/id/98801', '_blank')">
-                        <div class="social-icon">🎯</div>
+                    <div class="socialCard steam" onclick="window.open('https://steamcommunity.com/id/98801', '_blank')">
+                        <div class="socialIcon">🎯</div>
                         <h4>Steam主页</h4>
                         <p>添加我为游戏好友</p>
-                        <button class="social-button">访问主页</button>
+                        <button class="socialButton">访问主页</button>
                     </div>
                 </div>
-                <div class="thank-you-box">
+                <div class="thankYouBox">
                     <p>感谢你的使用！如果这个工具对你有帮助，欢迎通过以上平台关注我。<br>Q群交流：6800808</p>
                 </div>
-                <div class="footer-note">
+                <div class="footerNote">
                     <p>感谢每一位使用者，感谢我的粉丝</p>
                 </div>
             </div>
         </div>
-        <div id="messageToast" class="message-toast info">5个材料合成：只能选择隐秘级材料（用于合成刀/手套）</div>
+        <div id="messageToast" class="messageToast info">5个材料合成：只能选择隐秘级材料（用于合成刀/手套）</div>
     </div>
+
     <script src="script.js"></script>
     <script src="materials-data.js"></script>
     <script src="crates-data.js"></script>
