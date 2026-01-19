@@ -1407,6 +1407,7 @@ class CombinationCalculator {
         }
         this.batchResults = [];
         document.querySelector('.searchContainer').style.display = 'block';
+        document.getElementById('fcCombinationsText').style.display = 'block';
     }
     static addSelectionToResults(container, batchNum) {
         const results = container.querySelectorAll('.realTimeResult');
@@ -1638,6 +1639,7 @@ class CombinationCalculator {
         MaterialManager.filterByRule();
         this.updatePreview();
         MessageManager.show('特殊磨损页数据已清空', 'success');
+        document.getElementById('fcCombinationsText').style.display = 'none';
     }
     static clearSpecialWearTabElements() {
         CleanupManager.clearInputs([

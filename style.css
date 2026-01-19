@@ -617,6 +617,7 @@ button:disabled {
     line-height: 1.6;
     resize: none;
     box-shadow: var(--shadow-md);
+    display: none;
 }
 .realTimeResult {
     background: var(--white);
