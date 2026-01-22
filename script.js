@@ -1439,10 +1439,10 @@ class CombinationCalculator {
     }
     static selectResult(radio) {
         const radioBatch = parseInt(radio.dataset.batch);
-    if (radioBatch < this.batchSystem.currentBatch) {
-        radio.checked = true; 
-        return; 
-    }
+        if (radioBatch < this.batchSystem.currentBatch) {
+            radio.checked = true;
+            return;
+        }
         if (radio.checked && this.batchSystem.selectedResult?.radio === radio) {
             radio.checked = false;
             const container = document.getElementById(this.batchSystem.selectedResult.containerId);
@@ -1622,6 +1622,9 @@ class CombinationCalculator {
         }
     }
     static clearCurrentTab() {
+        MaterialManager.materialRoles = {};
+        MaterialManager.ratioEnabled = false;
+        MaterialManager.mainRatio = 0;
         for (let i = 1; i <= MaterialManager.typeCount; i++) {
             MaterialManager.clearType(i);
         }
@@ -1638,6 +1641,7 @@ class CombinationCalculator {
         MaterialManager.currentGrade = null;
         MaterialManager.filterByRule();
         this.updatePreview();
+        MaterialManager.updateRatioSliderUI();
         MessageManager.show('特殊磨损页数据已清空', 'success');
         document.getElementById('fcCombinationsText').style.display = 'none';
     }
@@ -2528,7 +2532,7 @@ class AppInitializer {
                 display.style.display = 'none';
             });
             CombinationCalculator.updatePreview();
-             document.querySelector('.searchContainer').style.display = 'none';
+            document.querySelector('.searchContainer').style.display = 'none';
             this.initBatchSystem();
         }, 100);
     }
